@@ -19,8 +19,10 @@ def listen():
 			break
 
 		print(response)
+		chat.insert(END, response + '\n')
 
-def getMessage(self):
+
+def getMessage(self):			# Finalmente funziona... Ma solo con "self". Nei tutorial non c'è
 	message = textbox.get()
 	textbox.delete(0, 'end')	# Svuota la barra di input
 	
@@ -34,7 +36,7 @@ def getMessage(self):
 		sendMessage(message)
 	
 
-def sendMessage(message):		# Finalmente funziona... Ma solo con "self". Nei tutorial non c'è
+def sendMessage(message):
 	message = message.encode('utf-8')	# Se premo solo invio il messaggio è b''
 	clientSocket.send(message)	# Se è vuoto non lo manda!
 
@@ -56,12 +58,15 @@ def main():
 	listenThread.start()
 
 	root = Tk()
-	root.geometry('800x20')
+	root.geometry('1280x720')
 	root.title('SuperChat 9000 - logged in as ' + username.decode('utf-8'))
 	global textbox
 	textbox = Entry(root)
 	textbox.bind("<Return>", getMessage)
 	textbox.pack(side = BOTTOM, fill = X)
+	global chat
+	chat = Text(root, height=100)		# Senza height non si estende a tutta la finestra
+	chat.pack(side = TOP, fill = BOTH)
 	root.mainloop()		# Fino a che non si chiude la GUI lo script non procede
 
 	clientSocket.send('!quit'.encode('utf-8'))	# Senza questo il server non chiude il socket e va in crisi

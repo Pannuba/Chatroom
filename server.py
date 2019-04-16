@@ -2,9 +2,8 @@
 
 '''TODO:	* Thread per inviare comandi dal server (o accettare connessioni, uno dei due)
 			* Controllare i comandi inviati dai client (!ban, poi non saprei...)
-			* File di configurazione con la lista degli admin, IP/porta, MOTD, passsword?...
 			* Sistema di login con utente e password
-			* Mostrare i contenuti nella chat in una finestra
+			* Mostrare i contenuti nella chat in una finestra, input di username (e poi password) in una GUI
 '''
 
 from socket import *
@@ -14,7 +13,7 @@ from configparser import *
 import signal
 
 def sigint_handler(signum, frame):		# Eseguito quando viene premuto CTRL + C
-	log('\nQuitting...')
+	log('Quitting...')
 	logfile.close()
 	for i in socketList:
 		i.send('GOODBYE'.encode('utf-8'))
@@ -76,7 +75,7 @@ def main():
 
 	global logfile
 	logfile = open('chat.log', 'a')
-	log(strftime('%Y-%m-%d %H:%M:%S') + ' Server booted')
+	log('\n' + strftime('%Y-%m-%d %H:%M:%S') + ' Server booted')
 
 	while True:
 		newSocket, clientAddress = serverSocket.accept()		# l'esecuzione torna all'inizio del while e si mette in "pausa" a serversocket.accept()
