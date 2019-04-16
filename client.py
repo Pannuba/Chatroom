@@ -10,8 +10,12 @@ def listen():
 		response = clientSocket.recv(512)
 		response = response.decode('utf-8')
 
-		if response == '__#@*^GOODBYE^*@#__':
+		if response == 'GOODBYE':		# Fare una funzione per controllare la risposta?
 			print('Server disconnected')
+			break
+		
+		elif response == 'BANNED':
+			print('This user has been banned')
 			break
 
 		print(response)
