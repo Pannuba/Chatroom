@@ -3,6 +3,13 @@
 from socket import *
 from threading import Thread
 from tkinter import *
+import signal
+
+def sigint_handler(signum, frame):		# Eseguito quando viene premuto CTRL + C
+	print('Quitting...')
+	clientSocket.send('!quit'.encode('utf-8'))
+	clientSocket.close()
+	quit()
 
 def listen():
 
@@ -18,7 +25,7 @@ def listen():
 			print('This user has been banned')
 			break
 
-		print(response)
+		#print(response)
 		chat.insert(END, response + '\n')
 
 
@@ -41,6 +48,8 @@ def sendMessage(message):
 	clientSocket.send(message)	# Se è vuoto non lo manda!
 
 def main():
+	signal.signal(signal.SIGINT, sigint_handler)
+
 	serverName = 'localhost'
 	serverPort = 12000
 	global clientSocket
