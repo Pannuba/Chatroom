@@ -31,14 +31,16 @@ def checkUser(user, socket):		# Apro e chiudo ogni volta o li lascio sempre aper
 	admins = open('admins.txt', 'r')
 	banned = open('banned.txt', 'r')
 
-	if user in admins.read():
+	for i in admins:
+		if user == i.rstrip('\n'):
 		log(user + ' is an admin')
 		return 'admin'
 	
-	if user in banned.read():
-		log(user + ' is banned')
-		socket.send('BANNED'.encode('utf-8'))
-		return 'banned'
+	for i in banned:
+		if user == i.rstrip('\n'):		# Senza rstrip conta gli \n come linee indipendenti
+			log(user + ' is banned')
+			socket.send('BANNED'.encode('utf-8'))
+			return 'banned'
 
 def handler(connectionSocket, user):
 
