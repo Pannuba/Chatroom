@@ -2,7 +2,8 @@
 
 from socket import *
 from threading import Thread
-from tkinter import *
+from tkinter import *		# import as tk?
+from configparser import *
 import signal
 
 def sigint_handler(signum, frame):		# Eseguito quando viene premuto CTRL + C
@@ -11,8 +12,15 @@ def sigint_handler(signum, frame):		# Eseguito quando viene premuto CTRL + C
 	clientSocket.close()
 	quit()
 
-def listen():
+def login(userField, loginWindow):		# Temporanea, unire a getMessage passando una string ("user", "pw"...)
+	global username			# Non so perché qua metto userField e in getMessage self, però funziona
+	username = userField.get()
+	#password = pwField.get()	# svolge tutto il login in questa funzione
+	clientSocket.send(username.encode('utf-8'))		# Se non va fare encode nella linea prima
+	loginWindow.destroy()
 
+def listen():
+	
 	while True:		# Senza il loop lo fa solo una volta
 		response = clientSocket.recv(512)
 		response = response.decode('utf-8')
@@ -41,7 +49,6 @@ def getMessage(self):			# Finalmente funziona... Ma solo con "self". Nei tutoria
 
 	else:
 		sendMessage(message)
-	
 
 def sendMessage(message):
 	message = message.encode('utf-8')	# Se premo solo invio il messaggio è b''
@@ -50,33 +57,51 @@ def sendMessage(message):
 def main():
 	signal.signal(signal.SIGINT, sigint_handler)
 
+	config = ConfigParser()
+	config.read('client_config.ini')
+	serverPort = int(config.get('Settings', 'port'))
+
 	serverName = 'localhost'
-	serverPort = 12000
 	global clientSocket
 	clientSocket = socket(AF_INET, SOCK_STREAM)
 	clientSocket.connect((serverName, serverPort))
 
-	username = input('Username: ')
+	loginWindow = Tk()
+	loginWindow.geometry('300x120')
+	loginWindow.title('SuperChat 9000 - login')
+	userLabel = Label(loginWindow, text = 'Username:')
+	userLabel.pack()
+	userField = Entry(loginWindow)
+	userField.pack(side = TOP)
+	pwLabel = Label(loginWindow, text = 'Password:')
+	pwLabel.pack()
+	pwField = Entry(loginWindow)
+	pwField.pack()
+	button = Button(text = 'Login', command = lambda: login(userField, loginWindow))	# Faccio userField globale?
+	button.pack(side = BOTTOM)
+	loginWindow.mainloop()
+
+	'''username = input('Username: ')
 	while len(username) > 64:
 		username = input('Username is too long (< 64 chars): ')
 	username = username.encode('utf-8')
-	clientSocket.send(username)
+	clientSocket.send(username)'''
 
 	listenThread = Thread(target=listen, args=())
 	listenThread.daemon = True		# Per far chiudere il programma con quit(), altrimenti si blocca
 	listenThread.start()
 
-	root = Tk()
-	root.geometry('1280x720')
-	root.title('SuperChat 9000 - logged in as ' + username.decode('utf-8'))
+	chatWindow = Tk()
+	chatWindow.geometry('1280x720')
+	chatWindow.title('SuperChat 9000 - logged in as ' + username)
 	global textbox
-	textbox = Entry(root)
+	textbox = Entry(chatWindow)
 	textbox.bind("<Return>", getMessage)
 	textbox.pack(side = BOTTOM, fill = X)
 	global chat
-	chat = Text(root, height=100)		# Senza height non si estende a tutta la finestra
+	chat = Text(chatWindow, height=100)		# Senza height non si estende a tutta la finestra
 	chat.pack(side = TOP, fill = BOTH)
-	root.mainloop()		# Fino a che non si chiude la GUI lo script non procede
+	chatWindow.mainloop()		# Fino a che non si chiude la GUI lo script non procede
 
 	clientSocket.send('!quit'.encode('utf-8'))	# Senza questo il server non chiude il socket e va in crisi
 	clientSocket.close()

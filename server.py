@@ -3,7 +3,6 @@
 '''TODO:	* Thread per inviare comandi dal server (o accettare connessioni, uno dei due)
 			* Controllare i comandi inviati dai client (!ban, poi non saprei...)
 			* Sistema di login con utente e password
-			* Mostrare i contenuti nella chat in una finestra, input di username (e poi password) in una GUI
 '''
 
 from socket import *
@@ -63,7 +62,7 @@ def main():
 	signal.signal(signal.SIGINT, sigint_handler)
 
 	config = ConfigParser()
-	config.read('config.ini')
+	config.read('server_config.ini')
 	serverPort = int(config.get('Settings', 'port'))
 
 	serverSocket = socket(AF_INET, SOCK_STREAM)
