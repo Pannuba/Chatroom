@@ -12,10 +12,10 @@ def sigint_handler(signum, frame):		# Eseguito quando viene premuto CTRL + C
 	clientSocket.close()
 	quit()
 
-def login(userField, loginWindow):		# Temporanea, unire a getMessage passando una string ("user", "pw"...)
+def login(userField, pwField, loginWindow):
 	global username			# Non so perché qua metto userField e in getMessage self, però funziona
 	username = userField.get()		# Controllare lunghezza username... Ma come con Tkinter?
-	#password = pwField.get()	# svolge tutto il login in questa funzione
+	password = pwField.get()	# svolge tutto il login in questa funzione
 	clientSocket.send(username.encode('utf-8'))		# Se non va fare encode nella linea prima
 	loginWindow.destroy()
 
@@ -48,11 +48,7 @@ def getMessage(self):			# Finalmente funziona... Ma solo con "self". Nei tutoria
 		print('Message is too long (< 512 chars)')
 
 	else:
-		sendMessage(message)
-
-def sendMessage(message):
-	message = message.encode('utf-8')	# Se premo solo invio il messaggio è b''
-	clientSocket.send(message)	# Se è vuoto non lo manda!
+		clientSocket.send(message.encode('utf-8'))
 
 def main():
 	signal.signal(signal.SIGINT, sigint_handler)
@@ -72,13 +68,12 @@ def main():
 	userLabel = Label(loginWindow, text = 'Username:')
 	userLabel.pack()
 	userField = Entry(loginWindow)
-	#userField.bind("<Return>", lambda: login(userField, loginWindow))	# Dopo aver messo le password lo tolgo
 	userField.pack(side = TOP)
 	pwLabel = Label(loginWindow, text = 'Password:')
 	pwLabel.pack()
 	pwField = Entry(loginWindow)
 	pwField.pack()
-	button = Button(text = 'Login', command = lambda: login(userField, loginWindow))	# Faccio userField globale?
+	button = Button(text = 'Login', command = lambda: login(userField, pwField, loginWindow))	# Faccio userField globale?
 	button.pack(side = BOTTOM)
 	loginWindow.mainloop()
 
