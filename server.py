@@ -33,8 +33,8 @@ def checkUser(user, socket):		# Apro e chiudo ogni volta o li lascio sempre aper
 
 	for i in admins:
 		if user == i.rstrip('\n'):
-		log(user + ' is an admin')
-		return 'admin'
+			log(user + ' is an admin')
+			return 'admin'
 	
 	for i in banned:
 		if user == i.rstrip('\n'):		# Senza rstrip conta gli \n come linee indipendenti
