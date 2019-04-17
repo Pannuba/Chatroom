@@ -5,7 +5,8 @@
 			* Controllare i comandi inviati dai client (!ban, poi non saprei...)
 			* Sistema di login con utente e password
 			* Fare funzione per distinguere tra comando e risposta
-			* Aggiungere popup GUI (login errato, utente bannato...)
+			* Estrarre solo l'IP dalla tuple del socket
+			* Se il client scrive !quit va in loop
 '''
 
 from socket import *
@@ -33,7 +34,7 @@ def sendToAll(message):
 	for i in socketList:
 		i.send(message.encode('utf-8'))
 
-def checkUser(user, socket):		# Apro e chiudo ogni volta o li lascio sempre aperti? try/except se non esistono?
+def checkUser(user, socket, address):		# Apro e chiudo ogni volta o li lascio sempre aperti? try/except se non esistono?
 	admins = open('admins.txt', 'r')
 	banned = open('banned.txt', 'r')
 
@@ -46,7 +47,7 @@ def checkUser(user, socket):		# Apro e chiudo ogni volta o li lascio sempre aper
 	
 	for i in banned:
 		if user == i.rstrip('\n'):		# Senza rstrip conta gli \n come linee indipendenti
-			log(user + ' is banned')
+			log('{} {}, {} has attempted to join the server, but is banned'.format(strftime('%Y-%m-%d %H:%M:%S'), address, user))
 			socket.send('BANNED'.encode('utf-8'))
 			admins.close()
 			banned.close()
@@ -90,14 +91,14 @@ def main():
 
 	global logfile
 	logfile = open('chat.log', 'a')
-	log('\n' + strftime('%Y-%m-%d %H:%M:%S') + ' Server booted')
+	log('\n' + strftime('%Y-%m-%d %H:%M:%S') + ' Server started')
 
 	while True:
 		newSocket, clientAddress = serverSocket.accept()		# l'esecuzione torna all'inizio del while e si mette in "pausa" a serversocket.accept()
 		user = newSocket.recv(16)
 		user = user.decode('utf-8')
 
-		while checkUser(user, newSocket) == 'banned':		# Trovare un modo più efficiente senza ripetere. While? Bool?
+		while checkUser(user, newSocket, clientAddress) == 'banned':		# Trovare un modo più efficiente senza ripetere. While? Bool?
 			newSocket, clientAddress = serverSocket.accept()
 			user = newSocket.recv(16)
 			user = user.decode('utf-8')

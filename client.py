@@ -12,6 +12,16 @@ def sigint_handler(signum, frame):		# Eseguito quando viene premuto CTRL + C
 	clientSocket.close()
 	quit()
 
+def popup(title, message):
+	popup = Tk()
+	popup.geometry('400x200')
+	popup.resizable(False, False)
+	popup.title(title)
+	popup.protocol("WM_DELETE_WINDOW", popup.destroy)		# Poi aggiungo un bottone
+	popupMessage = Label(popup, text = message)
+	popupMessage.pack()
+	popup.mainloop()
+
 def buildLoginWindow():
 	global loginWindow
 	loginWindow = Tk()													# Window
@@ -70,7 +80,7 @@ def listen():
 			break
 		
 		elif response == 'BANNED':
-			print('This user has been banned')
+			popup('Banned', 'This user has been banned.')
 			break
 
 		chat.config(state = NORMAL)		# Perché altrimenti non si aggiorna
@@ -97,9 +107,9 @@ def main():
 
 	config = ConfigParser()
 	config.read('client_config.ini')
+	serverName = config.get('Settings', 'ip')
 	serverPort = int(config.get('Settings', 'port'))
 
-	serverName = 'localhost'
 	clientSocket = socket(AF_INET, SOCK_STREAM)
 
 	buildLoginWindow()
