@@ -12,18 +12,29 @@ def sigint_handler(signum, frame):		# Eseguito quando viene premuto CTRL + C
 	clientSocket.close()
 	quit()
 
+def close():
+	print('Quitting...')
+	clientSocket.send('!quit'.encode('utf-8'))
+	clientSocket.close()
+	quit()
+
 def login(userField, pwField, loginWindow):
-	global username			# Non so perché qua metto userField e in getMessage self, però funziona
+	global username, password		# Non so perché qua metto userField e in getMessage self, però funziona
 	username = userField.get()		# Controllare lunghezza username... Ma come con Tkinter?
 	password = pwField.get()	# svolge tutto il login in questa funzione
+	
+	while username == '':		# Non va
+		loginWindow.destroy()
+		print('no')
+		
 	clientSocket.send(username.encode('utf-8'))		# Se non va fare encode nella linea prima
-	loginWindow.destroy()
+	loginWindow.destroy()		# Così lo script procede
 
 def listen():
 	
 	while True:		# Senza il loop lo fa solo una volta
 		response = clientSocket.recv(512)
-		response = response.decode('utf-8')
+		response = response.decode('utf-8')		# Fare funzione per distinguere tra comando e risposta
 
 		if response == 'GOODBYE':		# Fare una funzione per controllare la risposta?
 			print('Server disconnected')
@@ -33,9 +44,7 @@ def listen():
 			print('This user has been banned')
 			break
 
-		#print(response)
 		chat.insert(END, response + '\n')
-
 
 def getMessage(self):			# Finalmente funziona... Ma solo con "self". Nei tutorial non c'è
 	message = textbox.get()
@@ -64,7 +73,9 @@ def main():
 
 	loginWindow = Tk()
 	loginWindow.geometry('300x120')
+	loginWindow.resizable(False, False)
 	loginWindow.title('SuperChat 9000 - login')
+	loginWindow.protocol("WM_DELETE_WINDOW", close)
 	userLabel = Label(loginWindow, text = 'Username:')
 	userLabel.pack()
 	userField = Entry(loginWindow)
@@ -78,8 +89,8 @@ def main():
 	loginWindow.mainloop()
 
 	'''username = input('Username: ')
-	while len(username) > 64:
-		username = input('Username is too long (< 64 chars): ')
+	while len(username) > 16:
+		username = input('Username is too long (< 16 chars): ')
 	username = username.encode('utf-8')
 	clientSocket.send(username)'''
 
@@ -103,9 +114,7 @@ def main():
 	chat.pack(expand = True, side = LEFT, fill = BOTH)
 	chatWindow.mainloop()		# Fino a che non si chiude la GUI lo script non procede
 
-	clientSocket.send('!quit'.encode('utf-8'))	# Senza questo il server non chiude il socket e va in crisi
-	clientSocket.close()
-	quit()
+	close()		# Non c'è bisogno di controllare il tasto di uscita
 
 if __name__ == '__main__':
 	main()

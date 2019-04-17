@@ -4,6 +4,9 @@
 			* Controllare utente e password, ripetere controllo se non vanno bene
 			* Controllare i comandi inviati dai client (!ban, poi non saprei...)
 			* Sistema di login con utente e password
+			* Fare funzione per distinguere tra comando e risposta
+			* Aggiungere popup GUI (login errato, utente bannato...)
+			* Se la connessione del client avvenisse dopo aver premuto il tasto login?
 '''
 
 from socket import *
@@ -67,7 +70,7 @@ def handler(connectionSocket, user):
 				log(strftime('%Y-%m-%d %H:%M:%S') + ' Message from ' + response)
 				sendToAll(response)
 		
-		log(user + ' has left the server')		# Si termina il thread per un client connesso
+		log(strftime('%Y-%m-%d %H:%M:%S') + ' ' + user + ' has left the server')		# Si termina il thread per un client connesso
 		sendToAll(user + ' has left the server')
 		connectionSocket.close()				# Se non rimuovo il client disconnesso dall'array, quando
 		socketList.remove(connectionSocket)		# distribuisco il messaggio a tutti si impalla
@@ -93,12 +96,19 @@ def main():
 	while True:
 		newSocket, clientAddress = serverSocket.accept()		# l'esecuzione torna all'inizio del while e si mette in "pausa" a serversocket.accept()
 		
-		user = newSocket.recv(64)
+		user = newSocket.recv(16)
 		user = user.decode('utf-8')
 		
-		if checkUser(user, newSocket) == 'banned':		# Trovare un modo più efficiente senza ripetere. While? Bool?
+		while user == '!quit':		# Se si chiude la finestra di login prima di accedere. Molto brutto, dovrei usare un while(logged) e un bool
+			log('{} {} has disconnected without logging in'.format(strftime('%Y-%m-%d %H:%M:%S'), clientAddress))
+			newSocket.close()
 			newSocket, clientAddress = serverSocket.accept()
-			user = newSocket.recv(64)
+			user = newSocket.recv(16)
+			user = user.decode('utf-8')
+
+		while checkUser(user, newSocket) == 'banned':		# Trovare un modo più efficiente senza ripetere. While? Bool?
+			newSocket, clientAddress = serverSocket.accept()
+			user = newSocket.recv(16)
 			user = user.decode('utf-8')
 
 		socketList.append(newSocket)
