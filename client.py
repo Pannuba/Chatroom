@@ -12,12 +12,6 @@ def sigint_handler(signum, frame):		# Eseguito quando viene premuto CTRL + C
 	clientSocket.close()
 	quit()
 
-def close():
-	print('Quitting...')
-	clientSocket.send('!quit'.encode('utf-8'))
-	clientSocket.close()
-	quit()
-
 def login(userField, pwField, loginWindow):
 	global username, password		# Non so perché qua metto userField e in getMessage self, però funziona
 	username = userField.get()		# Controllare lunghezza username... Ma come con Tkinter?
@@ -26,7 +20,8 @@ def login(userField, pwField, loginWindow):
 	while username == '':		# Non va
 		loginWindow.destroy()
 		print('no')
-		
+	
+	clientSocket.connect((serverName, serverPort))	# Connessione al server
 	clientSocket.send(username.encode('utf-8'))		# Se non va fare encode nella linea prima
 	loginWindow.destroy()		# Così lo script procede
 
@@ -64,18 +59,18 @@ def main():
 
 	config = ConfigParser()
 	config.read('client_config.ini')
+	global serverPort, serverName		# Dovrei dichiararle tutte all'inizio le varaibili globali?
 	serverPort = int(config.get('Settings', 'port'))
 
 	serverName = 'localhost'
 	global clientSocket
 	clientSocket = socket(AF_INET, SOCK_STREAM)
-	clientSocket.connect((serverName, serverPort))
 
 	loginWindow = Tk()
 	loginWindow.geometry('300x120')
 	loginWindow.resizable(False, False)
 	loginWindow.title('SuperChat 9000 - login')
-	loginWindow.protocol("WM_DELETE_WINDOW", close)
+	loginWindow.protocol("WM_DELETE_WINDOW", quit)
 	userLabel = Label(loginWindow, text = 'Username:')
 	userLabel.pack()
 	userField = Entry(loginWindow)
@@ -113,8 +108,8 @@ def main():
 	scrollbar.pack(side = RIGHT, fill = Y)
 	chat.pack(expand = True, side = LEFT, fill = BOTH)
 	chatWindow.mainloop()		# Fino a che non si chiude la GUI lo script non procede
-
-	close()		# Non c'è bisogno di controllare il tasto di uscita
+	
+	sigint_handler(0, 0)		  # 0, 0 perché non so cosa fanno signum e frame
 
 if __name__ == '__main__':
 	main()

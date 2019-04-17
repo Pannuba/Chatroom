@@ -95,16 +95,8 @@ def main():
 
 	while True:
 		newSocket, clientAddress = serverSocket.accept()		# l'esecuzione torna all'inizio del while e si mette in "pausa" a serversocket.accept()
-		
 		user = newSocket.recv(16)
 		user = user.decode('utf-8')
-		
-		while user == '!quit':		# Se si chiude la finestra di login prima di accedere. Molto brutto, dovrei usare un while(logged) e un bool
-			log('{} {} has disconnected without logging in'.format(strftime('%Y-%m-%d %H:%M:%S'), clientAddress))
-			newSocket.close()
-			newSocket, clientAddress = serverSocket.accept()
-			user = newSocket.recv(16)
-			user = user.decode('utf-8')
 
 		while checkUser(user, newSocket) == 'banned':		# Trovare un modo più efficiente senza ripetere. While? Bool?
 			newSocket, clientAddress = serverSocket.accept()
