@@ -94,9 +94,13 @@ def main():
 	textbox = Entry(chatWindow)
 	textbox.bind("<Return>", getMessage)
 	textbox.pack(side = BOTTOM, fill = X)
+	scrollbar = Scrollbar(chatWindow, width = 16)
 	global chat
-	chat = Text(chatWindow, height=100)		# Senza height non si estende a tutta la finestra
-	chat.pack(side = TOP, fill = BOTH)
+	chat = Text(chatWindow)	# Non ho bisogno di width e height perché ho expand in pack
+	scrollbar.config(command = chat.yview)
+	chat.config(yscrollcommand = scrollbar.set)
+	scrollbar.pack(side = RIGHT, fill = Y)
+	chat.pack(expand = True, side = LEFT, fill = BOTH)
 	chatWindow.mainloop()		# Fino a che non si chiude la GUI lo script non procede
 
 	clientSocket.send('!quit'.encode('utf-8'))	# Senza questo il server non chiude il socket e va in crisi
