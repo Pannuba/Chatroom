@@ -14,7 +14,7 @@ def sigint_handler(signum, frame):		# Eseguito quando viene premuto CTRL + C
 
 def login(userField, loginWindow):		# Temporanea, unire a getMessage passando una string ("user", "pw"...)
 	global username			# Non so perché qua metto userField e in getMessage self, però funziona
-	username = userField.get()
+	username = userField.get()		# Controllare lunghezza username... Ma come con Tkinter?
 	#password = pwField.get()	# svolge tutto il login in questa funzione
 	clientSocket.send(username.encode('utf-8'))		# Se non va fare encode nella linea prima
 	loginWindow.destroy()
@@ -72,6 +72,7 @@ def main():
 	userLabel = Label(loginWindow, text = 'Username:')
 	userLabel.pack()
 	userField = Entry(loginWindow)
+	#userField.bind("<Return>", lambda: login(userField, loginWindow))	# Dopo aver messo le password lo tolgo
 	userField.pack(side = TOP)
 	pwLabel = Label(loginWindow, text = 'Password:')
 	pwLabel.pack()
@@ -92,7 +93,7 @@ def main():
 	listenThread.start()
 
 	chatWindow = Tk()
-	chatWindow.geometry('1280x720')
+	chatWindow.geometry('640x480')
 	chatWindow.title('SuperChat 9000 - logged in as ' + username)
 	global textbox
 	textbox = Entry(chatWindow)
