@@ -14,37 +14,36 @@ def sigint_handler(signum, frame):		# Eseguito quando viene premuto CTRL + C
 
 def buildLoginWindow():
 	global loginWindow
-	loginWindow = Tk()
+	loginWindow = Tk()													# Window
 	loginWindow.geometry('300x120')
 	loginWindow.resizable(False, False)
 	loginWindow.title('SuperChat 9000 - login')
 	loginWindow.protocol("WM_DELETE_WINDOW", quit)
-	userLabel = Label(loginWindow, text = 'Username:')
+	userLabel = Label(loginWindow, text = 'Username:')					# User label
 	userLabel.pack()
-	userField = Entry(loginWindow)
+	userField = Entry(loginWindow)										# User field
 	userField.pack(side = TOP)
-	pwLabel = Label(loginWindow, text = 'Password:')
+	pwLabel = Label(loginWindow, text = 'Password:')					# Password label
 	pwLabel.pack()
-	pwField = Entry(loginWindow)
+	pwField = Entry(loginWindow)										# Password field
 	pwField.pack()
 	button = Button(text = 'Login', command = lambda: login(userField, pwField, loginWindow))	# Faccio userField globale?
 	button.pack(side = BOTTOM)
 
 def buildChatWindow():
-	global chatWindow
-	chatWindow = Tk()
+	global chatWindow, textbox, chat
+	chatWindow = Tk()													# Window
 	chatWindow.geometry('640x480')
+	chatWindow.minsize(width = 160, height = 120)
 	chatWindow.title('SuperChat 9000 - logged in as ' + username)
-	global textbox
-	textbox = Entry(chatWindow)
+	textbox = Entry(chatWindow)											# Textbox
 	textbox.bind("<Return>", getMessage)
 	textbox.pack(side = BOTTOM, fill = X)
-	scrollbar = Scrollbar(chatWindow, width = 16)
-	global chat
-	chat = Text(chatWindow)	# Non ho bisogno di width e height perché ho expand in pack
-	scrollbar.config(command = chat.yview)
-	chat.config(yscrollcommand = scrollbar.set)
-	scrollbar.pack(side = RIGHT, fill = Y)
+	chat = Text(chatWindow, state = DISABLED)	# Non ho bisogno di width e height perché ho expand in pack
+	bar = Scrollbar(chatWindow, width = 16, command = chat.yview)		# Scrollbar, chat window
+	chat.bind("<1>", lambda event: chat.focus_set())	# Permette di copiare il testo, nonostante sia DISABLED
+	chat.config(yscrollcommand = bar.set)
+	bar.pack(side = RIGHT, fill = Y)
 	chat.pack(expand = True, side = LEFT, fill = BOTH)
 
 def login(userField, pwField, loginWindow):
@@ -74,7 +73,9 @@ def listen():
 			print('This user has been banned')
 			break
 
+		chat.config(state = NORMAL)		# Perché altrimenti non si aggiorna
 		chat.insert(END, response + '\n')
+		chat.config(state = DISABLED)
 
 def getMessage(self):			# Finalmente funziona... Ma solo con "self". Nei tutorial non c'è
 	message = textbox.get()
@@ -90,15 +91,15 @@ def getMessage(self):			# Finalmente funziona... Ma solo con "self". Nei tutoria
 		clientSocket.send(message.encode('utf-8'))
 
 def main():
+	global serverPort, serverName, clientSocket
+
 	signal.signal(signal.SIGINT, sigint_handler)
 
 	config = ConfigParser()
 	config.read('client_config.ini')
-	global serverPort, serverName		# Dovrei dichiararle tutte all'inizio le varaibili globali?
 	serverPort = int(config.get('Settings', 'port'))
 
 	serverName = 'localhost'
-	global clientSocket
 	clientSocket = socket(AF_INET, SOCK_STREAM)
 
 	buildLoginWindow()
