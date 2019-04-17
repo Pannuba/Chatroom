@@ -6,7 +6,6 @@
 			* Sistema di login con utente e password
 			* Fare funzione per distinguere tra comando e risposta
 			* Aggiungere popup GUI (login errato, utente bannato...)
-			* Se la connessione del client avvenisse dopo aver premuto il tasto login?
 '''
 
 from socket import *

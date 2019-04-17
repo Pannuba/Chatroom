@@ -12,6 +12,41 @@ def sigint_handler(signum, frame):		# Eseguito quando viene premuto CTRL + C
 	clientSocket.close()
 	quit()
 
+def buildLoginWindow():
+	global loginWindow
+	loginWindow = Tk()
+	loginWindow.geometry('300x120')
+	loginWindow.resizable(False, False)
+	loginWindow.title('SuperChat 9000 - login')
+	loginWindow.protocol("WM_DELETE_WINDOW", quit)
+	userLabel = Label(loginWindow, text = 'Username:')
+	userLabel.pack()
+	userField = Entry(loginWindow)
+	userField.pack(side = TOP)
+	pwLabel = Label(loginWindow, text = 'Password:')
+	pwLabel.pack()
+	pwField = Entry(loginWindow)
+	pwField.pack()
+	button = Button(text = 'Login', command = lambda: login(userField, pwField, loginWindow))	# Faccio userField globale?
+	button.pack(side = BOTTOM)
+
+def buildChatWindow():
+	global chatWindow
+	chatWindow = Tk()
+	chatWindow.geometry('640x480')
+	chatWindow.title('SuperChat 9000 - logged in as ' + username)
+	global textbox
+	textbox = Entry(chatWindow)
+	textbox.bind("<Return>", getMessage)
+	textbox.pack(side = BOTTOM, fill = X)
+	scrollbar = Scrollbar(chatWindow, width = 16)
+	global chat
+	chat = Text(chatWindow)	# Non ho bisogno di width e height perché ho expand in pack
+	scrollbar.config(command = chat.yview)
+	chat.config(yscrollcommand = scrollbar.set)
+	scrollbar.pack(side = RIGHT, fill = Y)
+	chat.pack(expand = True, side = LEFT, fill = BOTH)
+
 def login(userField, pwField, loginWindow):
 	global username, password		# Non so perché qua metto userField e in getMessage self, però funziona
 	username = userField.get()		# Controllare lunghezza username... Ma come con Tkinter?
@@ -66,21 +101,7 @@ def main():
 	global clientSocket
 	clientSocket = socket(AF_INET, SOCK_STREAM)
 
-	loginWindow = Tk()
-	loginWindow.geometry('300x120')
-	loginWindow.resizable(False, False)
-	loginWindow.title('SuperChat 9000 - login')
-	loginWindow.protocol("WM_DELETE_WINDOW", quit)
-	userLabel = Label(loginWindow, text = 'Username:')
-	userLabel.pack()
-	userField = Entry(loginWindow)
-	userField.pack(side = TOP)
-	pwLabel = Label(loginWindow, text = 'Password:')
-	pwLabel.pack()
-	pwField = Entry(loginWindow)
-	pwField.pack()
-	button = Button(text = 'Login', command = lambda: login(userField, pwField, loginWindow))	# Faccio userField globale?
-	button.pack(side = BOTTOM)
+	buildLoginWindow()
 	loginWindow.mainloop()
 
 	'''username = input('Username: ')
@@ -93,20 +114,7 @@ def main():
 	listenThread.daemon = True		# Per far chiudere il programma con quit(), altrimenti si blocca
 	listenThread.start()
 
-	chatWindow = Tk()
-	chatWindow.geometry('640x480')
-	chatWindow.title('SuperChat 9000 - logged in as ' + username)
-	global textbox
-	textbox = Entry(chatWindow)
-	textbox.bind("<Return>", getMessage)
-	textbox.pack(side = BOTTOM, fill = X)
-	scrollbar = Scrollbar(chatWindow, width = 16)
-	global chat
-	chat = Text(chatWindow)	# Non ho bisogno di width e height perché ho expand in pack
-	scrollbar.config(command = chat.yview)
-	chat.config(yscrollcommand = scrollbar.set)
-	scrollbar.pack(side = RIGHT, fill = Y)
-	chat.pack(expand = True, side = LEFT, fill = BOTH)
+	buildChatWindow()
 	chatWindow.mainloop()		# Fino a che non si chiude la GUI lo script non procede
 	
 	sigint_handler(0, 0)		  # 0, 0 perché non so cosa fanno signum e frame
