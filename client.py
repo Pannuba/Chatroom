@@ -12,15 +12,32 @@ def sigint_handler(signum, frame):		# Eseguito quando viene premuto CTRL + C
 	clientSocket.close()
 	quit()
 
+# Aggiungere quitWindow
+
 def popup(title, message):
 	popup = Tk()
-	popup.geometry('400x200')
+	popup.geometry('240x80')
 	popup.resizable(False, False)
 	popup.title(title)
-	popup.protocol("WM_DELETE_WINDOW", popup.destroy)		# Poi aggiungo un bottone
-	popupMessage = Label(popup, text = message)
-	popupMessage.pack()
+	popup.focus()
+	popup.protocol("WM_DELETE_WINDOW", popup.destroy)
+	popupMessage = Label(popup, text = message, pady = 10)#, width = 20, height = 20)
+	popupMessage.pack(side = TOP, fill = BOTH)		# Forse fill non va
+	popupButton = Button(popup, text = 'OK', command = popup.destroy)
+	popupButton.pack(side = BOTTOM, pady = 10)
 	popup.mainloop()
+
+def buildQuitWindow():
+	global quitWindow
+	quitWindow = Tk()
+	quitWindow.geometry('300x300')
+	quitWindow.resizable(False, False)
+	quitWindow.title('Are you sure you want to quit?')
+	quitWindow.focus()
+	yesButton = Button(quitWindow, text = 'Yes', command = quitWindow.destroy)	# Per ora entrambi sono destroy
+	yesButton.pack(side = LEFT)
+	noButton = Button(quitWindow, text = 'No', command = quitWindow.destroy)
+	noButton.pack(side = RIGHT)
 
 def buildLoginWindow():
 	global loginWindow
@@ -69,24 +86,6 @@ def login(userField, pwField, loginWindow):
 	clientSocket.send(username.encode('utf-8'))		# Se non va fare encode nella linea prima
 	loginWindow.destroy()		# Così lo script procede
 
-def listen():
-	
-	while True:		# Senza il loop lo fa solo una volta
-		response = clientSocket.recv(512)
-		response = response.decode('utf-8')		# Fare funzione per distinguere tra comando e risposta
-
-		if response == 'GOODBYE':		# Fare una funzione per controllare la risposta?
-			print('Server disconnected')
-			break
-		
-		elif response == 'BANNED':
-			popup('Banned', 'This user has been banned.')
-			break
-
-		chat.config(state = NORMAL)		# Perché altrimenti non si aggiorna
-		chat.insert(END, response + '\n')
-		chat.config(state = DISABLED)
-
 def getMessage(self):			# Finalmente funziona... Ma solo con "self". Nei tutorial non c'è
 	message = textbox.get()
 	textbox.delete(0, 'end')	# Svuota la barra di input
@@ -97,8 +96,37 @@ def getMessage(self):			# Finalmente funziona... Ma solo con "self". Nei tutoria
 	elif len(message) > 512:	# Dovrei controllare dopo encoding, ma forse non cambia
 		print('Message is too long (< 512 chars)')
 
+	elif message == '!quit':		# Potrei aggiungere risposte ad altri comandi
+		buildQuitWindow()
+		quitWindow.mainloop()
+		#print('ora passa a sigint')		# Perché lo stampa quando chiudo la chatWindow?
+		sigint_handler(0, 0)
+
 	else:
 		clientSocket.send(message.encode('utf-8'))
+	
+def listen():
+	
+	while True:		# Senza il loop lo fa solo una volta
+		response = clientSocket.recv(512)
+		response = response.decode('utf-8')		# Fare funzione per distinguere tra comando e risposta
+
+		if response == 'GOODBYE':		# Fare una funzione per controllare la risposta?
+			popup('Disconnected', 'The server has shut down')
+			break
+		
+		elif response == 'BANNED':
+			popup('Banned', 'This user has been banned.')
+			break
+		
+		elif response == 'DUPLICATE':
+			popup('Login failed', 'This user is already connected to the server')
+			break
+
+
+		chat.config(state = NORMAL)		# Perché altrimenti non si aggiorna
+		chat.insert(END, response + '\n')
+		chat.config(state = DISABLED)
 
 def main():
 	global serverPort, serverName, clientSocket
@@ -121,11 +149,10 @@ def main():
 	username = username.encode('utf-8')
 	clientSocket.send(username)'''
 
-	listenThread = Thread(target=listen, args=())
+	buildChatWindow()								# Costruisco la finestra prima del thread perché altrimenti quando
+	listenThread = Thread(target=listen, args=())	# arriva il messaggio di login la chat non è ancora stata creata e dà errore
 	listenThread.daemon = True		# Per far chiudere il programma con quit(), altrimenti si blocca
 	listenThread.start()
-
-	buildChatWindow()
 	chatWindow.mainloop()		# Fino a che non si chiude la GUI lo script non procede
 	
 	sigint_handler(0, 0)		  # 0, 0 perché non so cosa fanno signum e frame

@@ -5,7 +5,8 @@
 			* Controllare i comandi inviati dai client (!ban, poi non saprei...)
 			* Sistema di login con utente e password
 			* Fare funzione per distinguere tra comando e risposta
-			* Se il client scrive !quit va in loop
+			* Convertire l'username in lowercase per il login
+			* Fare una lista con tutti gli utenti per evitare doppi login
 '''
 
 from socket import *
@@ -34,6 +35,13 @@ def sendToAll(message):
 		i.send(message.encode('utf-8'))
 
 def checkUser(user, socket, ip):		# Apro e chiudo ogni volta o li lascio sempre aperti? try/except se non esistono?
+	
+	for i in usersList:
+		if user.lower() == i:
+			log(strftime('%Y-%m-%d %H:%M:%S') + ' ' + user + ' (' + ip + ') has attempted to join the server, but is already logged in')
+			socket.send('DUPLICATE'.encode('utf-8'))
+			return 'duplicate'
+
 	admins = open('admins.txt', 'r')
 	banned = open('banned.txt', 'r')
 
@@ -47,7 +55,6 @@ def checkUser(user, socket, ip):		# Apro e chiudo ogni volta o li lascio sempre 
 	for i in banned:
 		if user == i.rstrip('\n'):		# Senza rstrip conta gli \n come linee indipendenti
 			log(strftime('%Y-%m-%d %H:%M:%S') + ' ' + user + ' (' + ip + ') has attempted to join the server, but is banned')
-			# TOGLIERE FORMAT USARE NORMALE
 			socket.send('BANNED'.encode('utf-8'))
 			admins.close()
 			banned.close()
@@ -74,9 +81,10 @@ def handler(connectionSocket, user):
 		sendToAll(user + ' has left the server')
 		connectionSocket.close()				# Se non rimuovo il client disconnesso dall'array, quando
 		socketList.remove(connectionSocket)		# distribuisco il messaggio a tutti si impalla
+		usersList.remove(user.lower())
 
 def main():
-	global socketList, logfile
+	global socketList, usersList, logfile
 	signal.signal(signal.SIGINT, sigint_handler)
 
 	config = ConfigParser()
@@ -86,8 +94,9 @@ def main():
 	serverSocket = socket(AF_INET, SOCK_STREAM)
 	serverSocket.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
 	serverSocket.bind(('', serverPort))
-	serverSocket.listen(1)
+	serverSocket.listen(True)
 	socketList = []
+	usersList = []
 
 	logfile = open('chat.log', 'a')
 	log('\n' + strftime('%Y-%m-%d %H:%M:%S') + ' Server started')
@@ -97,14 +106,15 @@ def main():
 		user = newSocket.recv(16)							# Modificato clientAddress in ip, port per ottenere l'IP in una variabile
 		user = user.decode('utf-8')
 
-		while checkUser(user, newSocket, ip) == 'banned':		# Trovare un modo più efficiente senza ripetere. While? Bool?
+		while (checkUser(user, newSocket, ip) == 'duplicate') or (checkUser(user, newSocket, ip) == 'banned'):		# Trovare un modo più efficiente senza ripetere. While? Bool?
 			newSocket, clientAddress = serverSocket.accept()
 			user = newSocket.recv(16)
 			user = user.decode('utf-8')
 
 		socketList.append(newSocket)
+		usersList.append(user.lower())
 		log(ip + ' has joined the server as ' + user)	# Dovevo usare format() perché clientAddress è una tuple e lo manda in palla
-		
+		sendToAll(user + ' has joined the server')
 		thread = Thread(target=handler, args=(newSocket, user))
 		thread.daemon = True		# Sennò quit() si blocca
 		thread.start()
