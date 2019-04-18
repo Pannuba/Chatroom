@@ -14,17 +14,18 @@ from threading import Thread
 from time import strftime
 from configparser import *
 import signal
+import sys
 
-helpmessage =	'\nSERVER: Welcome to SuperChat 9000! Here\'s a list of available commands:\
-				\n\n!quit: you quit\n!help: shows this message\n\nHave fun, or something.'
+helpmessage =	'\nSERVER: Welcome to SuperChat 9000! Here\'s a list of available commands:\n\
+				\n!quit: you quit\n!help: shows this message\n\nHave fun, or something.'.encode('utf-8')
 
-def sigint_handler(signum, frame):		# Eseguito quando viene premuto CTRL + C
+def quit(signum, frame):		# Eseguito quando viene premuto CTRL + C
 	log('Quitting...')
 	logfile.close()
 	for i in socketList:
 		i.send('GOODBYE'.encode('utf-8'))
 		i.close()
-	quit()
+	sys.exit()
 
 def log(logMessage):	# Mostra un messaggio nel terminale e lo aggiunge a chat.log
 	print(logMessage)
@@ -42,8 +43,12 @@ def checkUser(user, socket, ip):		# Apro e chiudo ogni volta o li lascio sempre 
 			socket.send('DUPLICATE'.encode('utf-8'))
 			return 'duplicate'
 
-	admins = open('admins.txt', 'r')
-	banned = open('banned.txt', 'r')
+	try:
+		admins = open('admins.txt', 'r')
+		banned = open('banned.txt', 'r')
+	except:
+		log('admins.txt or banned.txt not found')
+		quit(0, 0)
 
 	for i in admins:
 		if user == i.rstrip('\n'):		# I file devono terminare con una linea vuota
@@ -70,7 +75,7 @@ def handler(connectionSocket, user):
 				break					# carattere è un ! controlla il comando, se non lo trova consiglia di fare !help
 			
 			if message == '!help':
-				sendToAll(helpmessage)
+				connectionSocket.send(helpmessage)
 			
 			else:
 				response = user + ": " + message
@@ -85,21 +90,33 @@ def handler(connectionSocket, user):
 
 def main():
 	global socketList, usersList, logfile
-	signal.signal(signal.SIGINT, sigint_handler)
-
-	config = ConfigParser()
-	config.read('server_config.ini')
-	serverPort = int(config.get('Settings', 'port'))
-
-	serverSocket = socket(AF_INET, SOCK_STREAM)
-	serverSocket.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
-	serverSocket.bind(('', serverPort))
-	serverSocket.listen(True)
 	socketList = []
 	usersList = []
 
+	signal.signal(signal.SIGINT, quit)
+
 	logfile = open('chat.log', 'a')
 	log('\n' + strftime('%Y-%m-%d %H:%M:%S') + ' Server started')
+
+	config = ConfigParser()
+
+	try:
+		config.read('server_config.ini')
+		serverPort = int(config.get('Settings', 'port'))
+	except:
+		log('server_config.ini not found')
+		quit(0, 0)
+
+	serverSocket = socket(AF_INET, SOCK_STREAM)
+	serverSocket.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
+
+	try:
+		serverSocket.bind(('', serverPort))
+	except:
+		log('Port ' + str(serverPort) + ' already in use')
+		quit(0, 0)
+
+	serverSocket.listen(True)
 
 	while True:
 		newSocket, (ip, port) = serverSocket.accept()		# l'esecuzione torna all'inizio del while e si mette in "pausa" a serversocket.accept()

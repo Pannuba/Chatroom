@@ -5,16 +5,20 @@ from threading import Thread
 from tkinter import *		# import as tk?
 from configparser import *
 import signal
+import sys
 
-def sigint_handler(signum, frame):		# Eseguito quando viene premuto CTRL + C
+def quit(signum, frame):		# Eseguito quando viene premuto CTRL + C
 	print('Quitting...')
-	clientSocket.send('!quit'.encode('utf-8'))
-	clientSocket.close()
-	quit()
+	try:
+		clientSocket.send('!quit'.encode('utf-8'))
+		clientSocket.close()
+	except:
+		pass
+	sys.exit()
 
 # Aggiungere quitWindow
 
-def popup(title, message):
+def popup(title, message):		# Creare un popup di errore, o passare qua un parametro che faccia uscire?
 	popup = Tk()
 	popup.geometry('240x80')
 	popup.resizable(False, False)
@@ -45,7 +49,7 @@ def buildLoginWindow():
 	loginWindow.geometry('300x120')
 	loginWindow.resizable(False, False)
 	loginWindow.title('SuperChat 9000 - login')
-	loginWindow.protocol("WM_DELETE_WINDOW", quit)
+	loginWindow.protocol("WM_DELETE_WINDOW", sys.exit)
 	userLabel = Label(loginWindow, text = 'Username:')					# User label
 	userLabel.pack()
 	userField = Entry(loginWindow)										# User field
@@ -100,7 +104,7 @@ def getMessage(self):			# Finalmente funziona... Ma solo con "self". Nei tutoria
 		buildQuitWindow()
 		quitWindow.mainloop()
 		#print('ora passa a sigint')		# Perché lo stampa quando chiudo la chatWindow?
-		sigint_handler(0, 0)
+		quit(0, 0)
 
 	else:
 		clientSocket.send(message.encode('utf-8'))
@@ -131,14 +135,19 @@ def listen():
 def main():
 	global serverPort, serverName, clientSocket
 
-	signal.signal(signal.SIGINT, sigint_handler)
-
-	config = ConfigParser()
-	config.read('client_config.ini')
-	serverName = config.get('Settings', 'ip')
-	serverPort = int(config.get('Settings', 'port'))
+	signal.signal(signal.SIGINT, quit)
 
 	clientSocket = socket(AF_INET, SOCK_STREAM)
+
+	config = ConfigParser()
+
+	try:
+		config.read('client_config.ini')
+		serverName = config.get('Settings', 'ip')
+		serverPort = int(config.get('Settings', 'port'))
+	except:
+		print('client_config.ini not found')
+		quit(0, 0)
 
 	buildLoginWindow()
 	loginWindow.mainloop()
@@ -151,11 +160,11 @@ def main():
 
 	buildChatWindow()								# Costruisco la finestra prima del thread perché altrimenti quando
 	listenThread = Thread(target=listen, args=())	# arriva il messaggio di login la chat non è ancora stata creata e dà errore
-	listenThread.daemon = True		# Per far chiudere il programma con quit(), altrimenti si blocca
+	listenThread.daemon = True		# Per far chiudere il programma con sys.exit(), altrimenti si blocca
 	listenThread.start()
 	chatWindow.mainloop()		# Fino a che non si chiude la GUI lo script non procede
 	
-	sigint_handler(0, 0)		  # 0, 0 perché non so cosa fanno signum e frame
+	quit(0, 0)		  # 0, 0 perché non so cosa fanno signum e frame
 
 if __name__ == '__main__':
 	main()
