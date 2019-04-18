@@ -7,6 +7,9 @@
 			* Fare funzione per distinguere tra comando e risposta
 			* Convertire l'username in lowercase per il login
 			* Fare una lista con tutti gli utenti per evitare doppi login
+			* Cronologia dei messaggi mandati, accessibile con la freccia su
+			* Colori custom in file config
+			* GUI per server
 '''
 
 from socket import *
@@ -82,11 +85,11 @@ def handler(connectionSocket, user):
 				log(strftime('%Y-%m-%d %H:%M:%S') + ' Message from ' + response)
 				sendToAll(response)
 		
-		log(strftime('%Y-%m-%d %H:%M:%S') + ' ' + user + ' has left the server')		# Si termina il thread per un client connesso
-		sendToAll(user + ' has left the server')
 		connectionSocket.close()				# Se non rimuovo il client disconnesso dall'array, quando
 		socketList.remove(connectionSocket)		# distribuisco il messaggio a tutti si impalla
 		usersList.remove(user.lower())
+		log(strftime('%Y-%m-%d %H:%M:%S') + ' ' + user + ' has left the server')		# Si termina il thread per un client connesso
+		sendToAll(user + ' has left the server')
 
 def main():
 	global socketList, usersList, logfile
