@@ -10,6 +10,8 @@
 			* Cronologia dei messaggi mandati, accessibile con la freccia su
 			* Colori custom in file config
 			* GUI per server
+			* Controllare che l'username non siano solo spazi, togliere quelli all'inizio
+			* Mostrare asterischi nel campo password
 '''
 
 from socket import *

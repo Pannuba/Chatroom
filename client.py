@@ -81,14 +81,20 @@ def login(userField, pwField, loginWindow):
 	global username, password		# Non so perché qua metto userField e in getMessage self, però funziona
 	username = userField.get()		# Controllare lunghezza username... Ma come con Tkinter?
 	password = pwField.get()	# svolge tutto il login in questa funzione
+	print('username preso: ' + username)
 	
-	while username == '':		# Non va
+	if username == '':
+		loginWindow.quit()
+		loginWindow.mainloop()
+		return
+	else:
 		loginWindow.destroy()
-		print('no')
 	
-	clientSocket.connect((serverName, serverPort))	# Connessione al server
-	clientSocket.send(username.encode('utf-8'))		# Se non va fare encode nella linea prima
-	loginWindow.destroy()		# Così lo script procede
+	try:
+		clientSocket.connect((serverName, serverPort))	# Connessione al server
+		clientSocket.send(username.encode('utf-8'))		# Se non va fare encode nella linea prima
+	except:
+		popup('Connection refused', 'Cannot connect to server')
 
 def getMessage(self):			# Finalmente funziona... Ma solo con "self". Nei tutorial non c'è
 	message = textbox.get()
