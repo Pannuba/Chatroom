@@ -5,8 +5,6 @@
 			* Controllare i comandi inviati dai client (!ban, poi non saprei...)
 			* Sistema di login con utente e password
 			* Fare funzione per distinguere tra comando e risposta
-			* Convertire l'username in lowercase per il login
-			* Fare una lista con tutti gli utenti per evitare doppi login
 			* Cronologia dei messaggi mandati, accessibile con la freccia su
 			* Colori custom in file config
 			* Controllare che l'username non siano solo spazi, togliere quelli all'inizio
@@ -25,10 +23,15 @@ helpmessage =	'\nSERVER: Welcome to SuperChat 9000! Here\'s a list of available 
 
 def quit(signum, frame):		# Eseguito quando viene premuto CTRL + C
 	log('Quitting...')
+
+	try:
+		for i in socketList:
+			i.send('GOODBYE'.encode('utf-8'))
+			i.close()
+	except Exception as e:
+		log(e)
+		
 	logfile.close()
-	for i in socketList:
-		i.send('GOODBYE'.encode('utf-8'))
-		i.close()
 	sys.exit()
 
 def log(logMessage):	# Mostra un messaggio nel terminale e lo aggiunge a chat.log
@@ -45,8 +48,8 @@ def checkUser(user, socket, ip):
 	try:
 		admins = open('admins.txt', 'r')
 		banned = open('banned.txt', 'r')
-	except:
-		log('admins.txt or banned.txt not found')
+	except Exception as e:
+		log(e)
 		quit(0, 0)
 
 	for i in admins:
@@ -60,7 +63,7 @@ def checkUser(user, socket, ip):
 			status = 'BANNED'
 
 	for i in usersList:
-		if user.lower() == i:
+		if user == i:
 			log(strftime('%Y-%m-%d %H:%M:%S') + ' ' + user + ' (' + ip + ') has attempted to join the server, but is already logged in')
 			status = 'DUPLICATE'	
 	
@@ -81,7 +84,7 @@ def handler(connectionSocket, user):
 				connectionSocket.send(helpmessage)
 			
 			else:
-				response = user + ": " + message
+				response = user + ': ' + message
 				log(strftime('%Y-%m-%d %H:%M:%S') + ' Message from ' + response)
 				sendToAll(response)
 		
@@ -107,7 +110,7 @@ def main():
 		config.read('server_config.ini')
 		serverPort = int(config.get('Settings', 'port'))
 	except:
-		log('server_config.ini not found')
+		log('server_config.ini is either missing, unreadable or badly set-up')
 		quit(0, 0)
 
 	serverSocket = socket(AF_INET, SOCK_STREAM)
@@ -125,9 +128,9 @@ def main():
 		newSocket, (ip, port) = serverSocket.accept()		# l'esecuzione torna all'inizio del while e si mette in "pausa" a serversocket.accept()
 		user = newSocket.recv(16).decode('utf-8')			# Modificato clientAddress in ip, port per ottenere l'IP in una variabile
 
-		while (checkUser(user, newSocket, ip)) != 'OK':		# Trovare un modo più efficiente senza ripetere. While? Bool?
+		while (checkUser(user.lower(), newSocket, ip)) != 'OK':		# Trovare un modo più efficiente senza ripetere. While? Bool?
 			newSocket.close()
-			newSocket, clientAddress = serverSocket.accept()		# Con questi il server non manda due cose di fila, così il client non ha problemi
+			newSocket, (ip, port) = serverSocket.accept()		# Con questi il server non manda due cose di fila, così il client non ha problemi
 			user = newSocket.recv(16).decode('utf-8')				# con l'OK il client deve inviare un "ACK" ricevuto dal server in handler o qua
 
 		socketList.append(newSocket)

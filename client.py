@@ -8,11 +8,10 @@ import signal, sys, time
 
 def quit(signum, frame):		# Eseguito quando viene premuto CTRL + C
 	print('Quitting...')
-	try:
-		clientSocket.send('!quit'.encode('utf-8'))
-		clientSocket.close()
+	try:					# Solo qui il ; per concatenare metodi sullo stesso oggetto funziona...
+		clientSocket.send('!quit'.encode('utf-8')); shutdown(); close()
 	except:
-		pass
+		pass		# Per quando non si è ancora connesso al server
 	sys.exit()
 
 # Aggiungere quitWindow
@@ -97,13 +96,16 @@ def login(userField, pwField, loginWindow):
 	try:	# ???
 		clientSocket.connect((serverName, serverPort))	# Connessione al server
 		clientSocket.send(username.encode('utf-8'))		# Dentro o fuori dal try?
-	except:
-		popup('Connection refused', 'Cannot connect to server')	# Quit?
+	except Exception as e:
+		print(e)
+		popup('Cannot connect to server', e)	# Quit?
 	
-	status = clientSocket.recv(16).decode('utf-8')		# Causa del bug
-
+	status = clientSocket.recv(16).decode('utf-8')
+	print('status ' + status)
 	if status == 'BANNED':							# Manca ADMIN, OK
 		popup('Banned', 'This user has been banned.')
+		clientSocket.shutdown()
+		clientSocket.close()
 		loginWindow.quit()
 		loginWindow.mainloop()
 		return
@@ -144,7 +146,7 @@ def listen():
 			popup('Disconnected', 'The server has shut down')
 			break
 
-		chat.config(state = NORMAL)		# Perché altrimenti non si aggiorna
+		chat.config(state = NORMAL)
 		chat.insert(END, response + '\n')
 		chat.see('end')
 		chat.config(state = DISABLED)
@@ -163,7 +165,7 @@ def main():
 		serverName = config.get('Settings', 'ip')
 		serverPort = int(config.get('Settings', 'port'))
 	except:
-		print('client_config.ini not found')
+		print('client_config.ini is either missing, unreadable or badly set-up')
 		quit(0, 0)
 
 	buildLoginWindow()
