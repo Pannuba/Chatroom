@@ -146,6 +146,7 @@ def listen():
 
 		chat.config(state = NORMAL)		# Perché altrimenti non si aggiorna
 		chat.insert(END, response + '\n')
+		chat.see('end')
 		chat.config(state = DISABLED)
 
 def main():
