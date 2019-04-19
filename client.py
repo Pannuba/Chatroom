@@ -32,7 +32,7 @@ def popup(title, message):		# Creare un popup di errore, o passare qua un parame
 def buildQuitWindow():
 	global quitWindow
 	quitWindow = Tk()
-	quitWindow.geometry('300x300')
+	quitWindow.geometry('100x100')
 	quitWindow.resizable(False, False)
 	quitWindow.title('Are you sure you want to quit?')
 	quitWindow.focus()
@@ -76,7 +76,7 @@ def buildChatWindow():
 	chat.pack(expand = True, side = LEFT, fill = BOTH)
 
 def login(userField, pwField, loginWindow):
-	global username, password		# Non so perché qua metto userField e in getMessage self, però funziona
+	global username, password, clientSocket		# Non so perché qua metto userField e in getMessage self, ma funziona
 	username = userField.get()
 	password = pwField.get()	# Svolge tutto il login in questa funzione
 	userField.delete(0, 'end')
@@ -93,7 +93,8 @@ def login(userField, pwField, loginWindow):
 		loginWindow.mainloop()
 		return
 	
-	try:	# ???
+	try:	# Il client invia un BrokenPipeError quando si connette dopo il popup di ban
+		clientSocket = socket(AF_INET, SOCK_STREAM)
 		clientSocket.connect((serverName, serverPort))	# Connessione al server
 		clientSocket.send(username.encode('utf-8'))		# Dentro o fuori dal try?
 	except Exception as e:
@@ -104,7 +105,7 @@ def login(userField, pwField, loginWindow):
 	print('status ' + status)
 	if status == 'BANNED':							# Manca ADMIN, OK
 		popup('Banned', 'This user has been banned.')
-		clientSocket.shutdown()
+		clientSocket.shutdown(SHUT_RDWR)
 		clientSocket.close()
 		loginWindow.quit()
 		loginWindow.mainloop()
@@ -134,12 +135,13 @@ def getMessage(self):			# Finalmente funziona... Ma solo con "self". Nei tutoria
 		#print('ora passa a sigint')		# Perché lo stampa quando chiudo la chatWindow?
 		quit(0, 0)
 
-	else:
-		clientSocket.send(message.encode('utf-8'))
+	#else:
+		#clientSocket.send(message.encode('utf-8'))
 	
 def listen():
 	
-	while True:		# Senza il loop lo fa solo una volta
+	while True:
+
 		response = clientSocket.recv(512).decode('utf-8')	# Fare funzione per distinguere tra comando e risposta
 		
 		if response == 'GOODBYE':		# Fare una funzione per controllare la risposta?
@@ -150,13 +152,12 @@ def listen():
 		chat.insert(END, response + '\n')
 		chat.see('end')
 		chat.config(state = DISABLED)
+	# Chiudere, tornare al login? è possibile eseguire una funzione quando termina un thread?
 
 def main():
-	global serverPort, serverName, clientSocket
+	global serverPort, serverName
 
 	signal.signal(signal.SIGINT, quit)
-
-	clientSocket = socket(AF_INET, SOCK_STREAM)
 
 	config = ConfigParser()
 
@@ -170,7 +171,6 @@ def main():
 
 	buildLoginWindow()
 	loginWindow.mainloop()
-	
 	buildChatWindow()								# Costruisco la finestra prima del thread perché altrimenti quando
 	listenThread = Thread(target=listen)			# arriva il messaggio di login la chat non è ancora stata creata e dà errore
 	listenThread.daemon = True		# Per far chiudere il programma con sys.exit(), altrimenti si blocca

@@ -24,12 +24,9 @@ helpmessage =	'\nSERVER: Welcome to SuperChat 9000! Here\'s a list of available 
 def quit(signum, frame):		# Eseguito quando viene premuto CTRL + C
 	log('Quitting...')
 
-	try:
-		for i in socketList:
-			i.send('GOODBYE'.encode('utf-8'))
-			i.close()
-	except Exception as e:
-		log(e)
+	for i in socketList:
+		i.send('GOODBYE'.encode('utf-8'))
+		i.close()
 		
 	logfile.close()
 	sys.exit()
@@ -39,8 +36,13 @@ def log(logMessage):	# Mostra un messaggio nel terminale e lo aggiunge a chat.lo
 	logfile.write(logMessage + '\n')
 
 def sendToAll(message):
-	for i in socketList:
-		i.send(message.encode('utf-8'))
+
+	try:
+		for i in socketList:
+			i.send(message.encode('utf-8'))
+	except Exception as e:
+		print(e)	# Cercare di renderla loggabile per quando è un broken pipe
+		quit(0,0)
 
 def checkUser(user, socket, ip):
 	status = 'OK'
@@ -129,7 +131,7 @@ def main():
 		user = newSocket.recv(16).decode('utf-8')			# Modificato clientAddress in ip, port per ottenere l'IP in una variabile
 
 		while (checkUser(user.lower(), newSocket, ip)) != 'OK':		# Trovare un modo più efficiente senza ripetere. While? Bool?
-			newSocket.close()
+			#newSocket.close() serve??
 			newSocket, (ip, port) = serverSocket.accept()		# Con questi il server non manda due cose di fila, così il client non ha problemi
 			user = newSocket.recv(16).decode('utf-8')				# con l'OK il client deve inviare un "ACK" ricevuto dal server in handler o qua
 
