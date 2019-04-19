@@ -102,7 +102,7 @@ def login(userField, pwField, loginWindow):
 		popup('Cannot connect to server', e)	# Quit?
 	
 	status = clientSocket.recv(16).decode('utf-8')
-	print('status ' + status)
+
 	if status == 'BANNED':							# Manca ADMIN, OK
 		popup('Banned', 'This user has been banned.')
 		clientSocket.shutdown(SHUT_RDWR)
@@ -135,8 +135,8 @@ def getMessage(self):			# Finalmente funziona... Ma solo con "self". Nei tutoria
 		#print('ora passa a sigint')		# Perché lo stampa quando chiudo la chatWindow?
 		quit(0, 0)
 
-	#else:
-		#clientSocket.send(message.encode('utf-8'))
+	else:
+		clientSocket.send(message.encode('utf-8'))
 	
 def listen():
 	
