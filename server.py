@@ -9,17 +9,15 @@
 			* Fare una lista con tutti gli utenti per evitare doppi login
 			* Cronologia dei messaggi mandati, accessibile con la freccia su
 			* Colori custom in file config
-			* GUI per server
 			* Controllare che l'username non siano solo spazi, togliere quelli all'inizio
-			* Mostrare asterischi nel campo password
 '''
 
 from socket import *
 from threading import Thread
 from time import strftime
+from tkinter import *
 from configparser import *
-import signal
-import sys
+import signal, sys
 
 helpmessage =	'\nSERVER: Welcome to SuperChat 9000! Here\'s a list of available commands:\n\
 				\n!quit: you quit\n!help: shows this message\n\nHave fun, or something.'.encode('utf-8')
@@ -40,8 +38,8 @@ def sendToAll(message):
 	for i in socketList:
 		i.send(message.encode('utf-8'))
 
-def checkUser(user, socket, ip):		# Apro e chiudo ogni volta o li lascio sempre aperti? try/except se non esistono?
-	
+def checkUser(user, socket, ip):
+	'''	
 	for i in usersList:
 		if user.lower() == i:
 			log(strftime('%Y-%m-%d %H:%M:%S') + ' ' + user + ' (' + ip + ') has attempted to join the server, but is already logged in')
@@ -58,6 +56,7 @@ def checkUser(user, socket, ip):		# Apro e chiudo ogni volta o li lascio sempre 
 	for i in admins:
 		if user == i.rstrip('\n'):		# I file devono terminare con una linea vuota
 			log(user + ' is an admin')
+			socket.send('ADMIN'.encode('utf-8'))
 			admins.close()
 			banned.close()
 			return 'admin'
@@ -69,17 +68,55 @@ def checkUser(user, socket, ip):		# Apro e chiudo ogni volta o li lascio sempre 
 			admins.close()
 			banned.close()
 			return 'banned'
+	
+	admins.close()
+	banned.close()
+	socket.send('OK'.encode('utf-8'))
+	return 'ok'
+	'''
+
+	status = 'OK'
+
+	for i in usersList:
+		if user.lower() == i:
+			log(strftime('%Y-%m-%d %H:%M:%S') + ' ' + user + ' (' + ip + ') has attempted to join the server, but is already logged in')
+			status = 'DUPLICATE'
+
+	try:
+		admins = open('admins.txt', 'r')
+		banned = open('banned.txt', 'r')
+	except:
+		log('admins.txt or banned.txt not found')
+		quit(0, 0)
+
+	for i in admins:
+		if user == i.rstrip('\n'):		# I file devono terminare con una linea vuota
+			log(user + ' is an admin')
+			status = 'ADMIN'
+	
+	for i in banned:
+		if user == i.rstrip('\n'):		# Senza rstrip conta gli \n come linee indipendenti
+			log(strftime('%Y-%m-%d %H:%M:%S') + ' ' + user + ' (' + ip + ') has attempted to join the server, but is banned')
+			status = 'BANNED'
+	
+	admins.close()
+	banned.close()
+
+	if status == 'OK':		# Non deve inviare 'OK' al client
+		return 'OK'
+
+	socket.send(status.encode('utf-8'))
+	return status
 
 def handler(connectionSocket, user):
 
 		while True:
-			message = connectionSocket.recv(512)	# Attende la ricezione di un messaggio
-			message = message.decode('utf-8')	# Funzione checkmessage?
+			message = connectionSocket.recv(512).decode('utf-8')	# Attende la ricezione di un messaggio
 
 			if message == '!quit':		# Controllare per altri comandi (fare funzione). Posso fare che se il primo 
 				break					# carattere è un ! controlla il comando, se non lo trova consiglia di fare !help
 			
-			if message == '!help':
+			if message == '!help':							# Funzione checkmessage?
 				connectionSocket.send(helpmessage)
 			
 			else:
@@ -125,13 +162,12 @@ def main():
 
 	while True:
 		newSocket, (ip, port) = serverSocket.accept()		# l'esecuzione torna all'inizio del while e si mette in "pausa" a serversocket.accept()
-		user = newSocket.recv(16)							# Modificato clientAddress in ip, port per ottenere l'IP in una variabile
-		user = user.decode('utf-8')
+		user = newSocket.recv(16).decode('utf-8')			# Modificato clientAddress in ip, port per ottenere l'IP in una variabile
 
-		while (checkUser(user, newSocket, ip) == 'duplicate') or (checkUser(user, newSocket, ip) == 'banned'):		# Trovare un modo più efficiente senza ripetere. While? Bool?
-			newSocket, clientAddress = serverSocket.accept()
-			user = newSocket.recv(16)
-			user = user.decode('utf-8')
+		while (checkUser(user, newSocket, ip)) != 'OK':		# Trovare un modo più efficiente senza ripetere. While? Bool?
+			newSocket.close()
+			newSocket, clientAddress = serverSocket.accept()		# Con questi il server non manda due cose di fila, così il client non ha problemi
+			user = newSocket.recv(16).decode('utf-8')				# con l'OK il client deve inviare un "ACK" ricevuto dal server in handler o qua
 
 		socketList.append(newSocket)
 		usersList.append(user.lower())

@@ -2,10 +2,9 @@
 
 from socket import *
 from threading import Thread
-from tkinter import *		# import as tk?
+from tkinter import *
 from configparser import *
-import signal
-import sys
+import signal, sys, time
 
 def quit(signum, frame):		# Eseguito quando viene premuto CTRL + C
 	print('Quitting...')
@@ -20,7 +19,7 @@ def quit(signum, frame):		# Eseguito quando viene premuto CTRL + C
 
 def popup(title, message):		# Creare un popup di errore, o passare qua un parametro che faccia uscire?
 	popup = Tk()
-	popup.geometry('240x80')
+	popup.geometry('320x80')
 	popup.resizable(False, False)
 	popup.title(title)
 	popup.focus()
@@ -56,7 +55,7 @@ def buildLoginWindow():
 	userField.pack(side = TOP)
 	pwLabel = Label(loginWindow, text = 'Password:')					# Password label
 	pwLabel.pack()
-	pwField = Entry(loginWindow)										# Password field
+	pwField = Entry(loginWindow, show = '*')										# Password field
 	pwField.pack()
 	button = Button(text = 'Login', command = lambda: login(userField, pwField, loginWindow))	# Faccio userField globale?
 	button.pack(side = BOTTOM)
@@ -79,22 +78,50 @@ def buildChatWindow():
 
 def login(userField, pwField, loginWindow):
 	global username, password		# Non so perché qua metto userField e in getMessage self, però funziona
-	username = userField.get()		# Controllare lunghezza username... Ma come con Tkinter?
-	password = pwField.get()	# svolge tutto il login in questa funzione
-	print('username preso: ' + username)
+	username = userField.get()
+	password = pwField.get()	# Svolge tutto il login in questa funzione
+	userField.delete(0, 'end')
 	
 	if username == '':
+		popup('Login failed', 'Username field cannot be empty')
+		loginWindow.quit()		# Con destroy non funziona
+		loginWindow.mainloop()
+		return
+
+	elif len(username) > 16:
+		popup('Login failed', 'Username can\'t be longer than 16 characters')
 		loginWindow.quit()
 		loginWindow.mainloop()
 		return
-	else:
-		loginWindow.destroy()
 	
-	try:
+	try:	# ???
 		clientSocket.connect((serverName, serverPort))	# Connessione al server
-		clientSocket.send(username.encode('utf-8'))		# Se non va fare encode nella linea prima
+		clientSocket.send(username.encode('utf-8'))		# Dentro o fuori dal try?
 	except:
-		popup('Connection refused', 'Cannot connect to server')
+		popup('Connection refused', 'Cannot connect to server')	# Quit?
+	
+	status = clientSocket.recv(16).decode('utf-8')		# L'OK non lo metto perché è inutile
+
+	if status == 'BANNED':							# Manca ADMIN
+		popup('Banned', 'This user has been banned.')
+		loginWindow.quit()
+		loginWindow.mainloop()
+		return
+		
+	elif status == 'DUPLICATE':
+		popup('Login failed', 'This user is already connected to the server')
+		loginWindow.quit()
+		loginWindow.mainloop()
+		return
+	
+	'''
+	What broke: * if trying to login twice as banned, it says can't connect to server.
+				* col nuovo sistema degli status al login, O il client mostra la risposta
+				  del server, o se ne mangia un pezzo (a seconda che ci sia l'OK o no.
+				  Questo perché si invia o riceve qualcosa due volte di fila
+	'''
+	
+	loginWindow.destroy()
 
 def getMessage(self):			# Finalmente funziona... Ma solo con "self". Nei tutorial non c'è
 	message = textbox.get()
@@ -118,21 +145,11 @@ def getMessage(self):			# Finalmente funziona... Ma solo con "self". Nei tutoria
 def listen():
 	
 	while True:		# Senza il loop lo fa solo una volta
-		response = clientSocket.recv(512)
-		response = response.decode('utf-8')		# Fare funzione per distinguere tra comando e risposta
-
+		response = clientSocket.recv(512).decode('utf-8')	# Fare funzione per distinguere tra comando e risposta
+		
 		if response == 'GOODBYE':		# Fare una funzione per controllare la risposta?
 			popup('Disconnected', 'The server has shut down')
 			break
-		
-		elif response == 'BANNED':
-			popup('Banned', 'This user has been banned.')
-			break
-		
-		elif response == 'DUPLICATE':
-			popup('Login failed', 'This user is already connected to the server')
-			break
-
 
 		chat.config(state = NORMAL)		# Perché altrimenti non si aggiorna
 		chat.insert(END, response + '\n')
@@ -157,15 +174,9 @@ def main():
 
 	buildLoginWindow()
 	loginWindow.mainloop()
-
-	'''username = input('Username: ')
-	while len(username) > 16:
-		username = input('Username is too long (< 16 chars): ')
-	username = username.encode('utf-8')
-	clientSocket.send(username)'''
-
+	
 	buildChatWindow()								# Costruisco la finestra prima del thread perché altrimenti quando
-	listenThread = Thread(target=listen, args=())	# arriva il messaggio di login la chat non è ancora stata creata e dà errore
+	listenThread = Thread(target=listen)			# arriva il messaggio di login la chat non è ancora stata creata e dà errore
 	listenThread.daemon = True		# Per far chiudere il programma con sys.exit(), altrimenti si blocca
 	listenThread.start()
 	chatWindow.mainloop()		# Fino a che non si chiude la GUI lo script non procede
