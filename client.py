@@ -100,9 +100,9 @@ def login(userField, pwField, loginWindow):
 	except:
 		popup('Connection refused', 'Cannot connect to server')	# Quit?
 	
-	status = clientSocket.recv(16).decode('utf-8')		# L'OK non lo metto perché è inutile
+	status = clientSocket.recv(16).decode('utf-8')		# Causa del bug
 
-	if status == 'BANNED':							# Manca ADMIN
+	if status == 'BANNED':							# Manca ADMIN, OK
 		popup('Banned', 'This user has been banned.')
 		loginWindow.quit()
 		loginWindow.mainloop()
@@ -113,13 +113,6 @@ def login(userField, pwField, loginWindow):
 		loginWindow.quit()
 		loginWindow.mainloop()
 		return
-	
-	'''
-	What broke: * if trying to login twice as banned, it says can't connect to server.
-				* col nuovo sistema degli status al login, O il client mostra la risposta
-				  del server, o se ne mangia un pezzo (a seconda che ci sia l'OK o no.
-				  Questo perché si invia o riceve qualcosa due volte di fila
-	'''
 	
 	loginWindow.destroy()
 

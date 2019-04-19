@@ -10,6 +10,7 @@
 			* Cronologia dei messaggi mandati, accessibile con la freccia su
 			* Colori custom in file config
 			* Controllare che l'username non siano solo spazi, togliere quelli all'inizio
+			* BUG: if trying to login twice as banned, it says can't connect to server
 '''
 
 from socket import *
@@ -39,48 +40,7 @@ def sendToAll(message):
 		i.send(message.encode('utf-8'))
 
 def checkUser(user, socket, ip):
-	'''	
-	for i in usersList:
-		if user.lower() == i:
-			log(strftime('%Y-%m-%d %H:%M:%S') + ' ' + user + ' (' + ip + ') has attempted to join the server, but is already logged in')
-			socket.send('DUPLICATE'.encode('utf-8'))
-			return 'duplicate'
-
-	try:
-		admins = open('admins.txt', 'r')
-		banned = open('banned.txt', 'r')
-	except:
-		log('admins.txt or banned.txt not found')
-		quit(0, 0)
-
-	for i in admins:
-		if user == i.rstrip('\n'):		# I file devono terminare con una linea vuota
-			log(user + ' is an admin')
-			socket.send('ADMIN'.encode('utf-8'))
-			admins.close()
-			banned.close()
-			return 'admin'
-	
-	for i in banned:
-		if user == i.rstrip('\n'):		# Senza rstrip conta gli \n come linee indipendenti
-			log(strftime('%Y-%m-%d %H:%M:%S') + ' ' + user + ' (' + ip + ') has attempted to join the server, but is banned')
-			socket.send('BANNED'.encode('utf-8'))
-			admins.close()
-			banned.close()
-			return 'banned'
-	
-	admins.close()
-	banned.close()
-	socket.send('OK'.encode('utf-8'))
-	return 'ok'
-	'''
-
 	status = 'OK'
-
-	for i in usersList:
-		if user.lower() == i:
-			log(strftime('%Y-%m-%d %H:%M:%S') + ' ' + user + ' (' + ip + ') has attempted to join the server, but is already logged in')
-			status = 'DUPLICATE'
 
 	try:
 		admins = open('admins.txt', 'r')
@@ -98,13 +58,14 @@ def checkUser(user, socket, ip):
 		if user == i.rstrip('\n'):		# Senza rstrip conta gli \n come linee indipendenti
 			log(strftime('%Y-%m-%d %H:%M:%S') + ' ' + user + ' (' + ip + ') has attempted to join the server, but is banned')
 			status = 'BANNED'
+
+	for i in usersList:
+		if user.lower() == i:
+			log(strftime('%Y-%m-%d %H:%M:%S') + ' ' + user + ' (' + ip + ') has attempted to join the server, but is already logged in')
+			status = 'DUPLICATE'	
 	
 	admins.close()
 	banned.close()
-
-	if status == 'OK':		# Non deve inviare 'OK' al client
-		return 'OK'
-
 	socket.send(status.encode('utf-8'))
 	return status
 
