@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
-'''TODO:	* Thread per inviare comandi dal server (o accettare connessioni, uno dei due)
-			* Controllare utente e password, ripetere controllo se non vanno bene
+'''TODO:	* Thread per inviare comandi dal server (o accettare connessioni, uno dei due)gi
 			* Controllare i comandi inviati dai client (!ban, poi non saprei...)
 			* Sistema di login con utente e password
 			* Fare funzione per distinguere tra comando e risposta

@@ -76,20 +76,47 @@ def buildLoginWindow():
 	button.pack(side=BOTTOM)
 
 def buildChatWindow():
-	global chatWindow, textbox, chat
+	global chatWindow, textbox, chat, buffer, index
+	index = -1
+	buffer = []
 	chatWindow = Tk()													# Window
 	chatWindow.geometry('640x480')
 	chatWindow.minsize(width=160, height=120)
 	chatWindow.title('SuperChat 9000 - logged in as ' + username)
 	textbox = Entry(chatWindow)											# Textbox
-	textbox.bind("<Return>", getMessage)
+	textbox.bind('<Return>', getMessage)
+	textbox.bind('<Up>', scrollBufferUp)
+	textbox.bind('<Down>', scrollBufferDown)
 	textbox.pack(side=BOTTOM, fill=X)
 	chat = Text(chatWindow, state=DISABLED)	# Non ho bisogno di width e height perché ho expand in pack
 	bar = Scrollbar(chatWindow, width=16, command=chat.yview)		# Scrollbar, chat window
-	chat.bind("<1>", lambda event: chat.focus_set())	# Permette di copiare il testo, nonostante sia DISABLED
+	chat.bind('<1>', lambda event: chat.focus_set())	# Permette di copiare il testo, nonostante sia DISABLED
 	chat.config(yscrollcommand=bar.set)
 	bar.pack(side=RIGHT, fill=Y)
 	chat.pack(expand=True, side=LEFT, fill=BOTH)
+
+def scrollBufferUp(self):
+	global index
+	index += 1
+
+	if index > (len(buffer) - 1):
+		index -= 1
+		return
+
+	textbox.delete(0, 'end')
+	textbox.insert(END, buffer[index])
+
+def scrollBufferDown(self):
+	global index
+	index -= 1
+
+	if index < 0:
+		index = -1
+		textbox.delete(0, 'end')
+		return
+
+	textbox.delete(0, 'end')
+	textbox.insert(END, buffer[index])
 
 def login(userField, pwField, loginWindow):
 	global username, password, clientSocket		# Non so perché qua metto userField e in getMessage self, ma funziona
@@ -129,6 +156,7 @@ def login(userField, pwField, loginWindow):
 	loginWindow.destroy()
 
 def getMessage(self):			# Finalmente funziona... Ma solo con "self". Nei tutorial non c'è
+	global index
 	message = textbox.get()
 	textbox.delete(0, 'end')	# Svuota la barra di input
 	
@@ -146,6 +174,8 @@ def getMessage(self):			# Finalmente funziona... Ma solo con "self". Nei tutoria
 
 	else:
 		clientSocket.send(message.encode('utf-8'))
+		index = -1		# Controllare che il messaggio inviato non è già stato mandato
+		buffer.insert(0, message)
 	
 def listen():
 	
