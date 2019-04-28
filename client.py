@@ -14,7 +14,23 @@ def quit(signum, frame):		# Eseguito quando viene premuto CTRL + C
 		pass		# Per quando non si è ancora connesso al server
 	sys.exit()
 
-# Aggiungere quitWindow
+def checkUsername(username):
+
+	boolean = False
+
+	if len(username) > 16:
+		popup('Login failed', 'Username can\'t be longer than 16 characters')
+
+		if username.strip() != username:
+			popup('Login failed', 'Username cannot start or end with spaces')
+
+	if username == '':
+		popup('Login failed', 'Username field cannot be empty')
+	
+	else:
+		boolean = True
+
+	return boolean
 
 def popup(title, message):		# Creare un popup di errore, o passare qua un parametro che faccia uscire?
 	popup = Tk()
@@ -23,10 +39,10 @@ def popup(title, message):		# Creare un popup di errore, o passare qua un parame
 	popup.title(title)
 	popup.focus()
 	popup.protocol("WM_DELETE_WINDOW", popup.destroy)
-	popupMessage = Label(popup, text = message, pady = 10)#, width = 20, height = 20)
-	popupMessage.pack(side = TOP, fill = BOTH)		# Forse fill non va
-	popupButton = Button(popup, text = 'OK', command = popup.destroy)
-	popupButton.pack(side = BOTTOM, pady = 10)
+	popupMessage = Label(popup, text=message, pady=10)#, width=20, height=20)
+	popupMessage.pack(side=TOP, fill=BOTH)		# Forse fill non va
+	popupButton = Button(popup, text='OK', command=popup.destroy)
+	popupButton.pack(side=BOTTOM, pady=10)
 	popup.mainloop()
 
 def buildQuitWindow():
@@ -36,10 +52,10 @@ def buildQuitWindow():
 	quitWindow.resizable(False, False)
 	quitWindow.title('Are you sure you want to quit?')
 	quitWindow.focus()
-	yesButton = Button(quitWindow, text = 'Yes', command = quitWindow.destroy)	# Per ora entrambi sono destroy
-	yesButton.pack(side = LEFT)
-	noButton = Button(quitWindow, text = 'No', command = quitWindow.destroy)
-	noButton.pack(side = RIGHT)
+	yesButton = Button(quitWindow, text='Yes', command=quitWindow.destroy)	# Per ora entrambi sono destroy
+	yesButton.pack(side=LEFT)
+	noButton = Button(quitWindow, text='No', command=quitWindow.destroy)
+	noButton.pack(side=RIGHT)
 
 def buildLoginWindow():
 	global loginWindow
@@ -48,48 +64,41 @@ def buildLoginWindow():
 	loginWindow.resizable(False, False)
 	loginWindow.title('SuperChat 9000 - login')
 	loginWindow.protocol("WM_DELETE_WINDOW", sys.exit)
-	userLabel = Label(loginWindow, text = 'Username:')					# User label
+	userLabel = Label(loginWindow, text='Username:')					# User label
 	userLabel.pack()
 	userField = Entry(loginWindow)										# User field
-	userField.pack(side = TOP)
-	pwLabel = Label(loginWindow, text = 'Password:')					# Password label
+	userField.pack(side=TOP)
+	pwLabel = Label(loginWindow, text='Password:')					# Password label
 	pwLabel.pack()
-	pwField = Entry(loginWindow, show = '*')										# Password field
+	pwField = Entry(loginWindow, show='*')										# Password field
 	pwField.pack()
-	button = Button(text = 'Login', command = lambda: login(userField, pwField, loginWindow))	# Faccio userField globale?
-	button.pack(side = BOTTOM)
+	button = Button(text='Login', command=lambda: login(userField, pwField, loginWindow))	# Faccio userField globale?
+	button.pack(side=BOTTOM)
 
 def buildChatWindow():
 	global chatWindow, textbox, chat
 	chatWindow = Tk()													# Window
 	chatWindow.geometry('640x480')
-	chatWindow.minsize(width = 160, height = 120)
+	chatWindow.minsize(width=160, height=120)
 	chatWindow.title('SuperChat 9000 - logged in as ' + username)
 	textbox = Entry(chatWindow)											# Textbox
 	textbox.bind("<Return>", getMessage)
-	textbox.pack(side = BOTTOM, fill = X)
-	chat = Text(chatWindow, state = DISABLED)	# Non ho bisogno di width e height perché ho expand in pack
-	bar = Scrollbar(chatWindow, width = 16, command = chat.yview)		# Scrollbar, chat window
+	textbox.pack(side=BOTTOM, fill=X)
+	chat = Text(chatWindow, state=DISABLED)	# Non ho bisogno di width e height perché ho expand in pack
+	bar = Scrollbar(chatWindow, width=16, command=chat.yview)		# Scrollbar, chat window
 	chat.bind("<1>", lambda event: chat.focus_set())	# Permette di copiare il testo, nonostante sia DISABLED
-	chat.config(yscrollcommand = bar.set)
-	bar.pack(side = RIGHT, fill = Y)
-	chat.pack(expand = True, side = LEFT, fill = BOTH)
+	chat.config(yscrollcommand=bar.set)
+	bar.pack(side=RIGHT, fill=Y)
+	chat.pack(expand=True, side=LEFT, fill=BOTH)
 
 def login(userField, pwField, loginWindow):
 	global username, password, clientSocket		# Non so perché qua metto userField e in getMessage self, ma funziona
 	username = userField.get()
 	password = pwField.get()	# Svolge tutto il login in questa funzione
 	userField.delete(0, 'end')
-	
-	if username == '':
-		popup('Login failed', 'Username field cannot be empty')
-		loginWindow.quit()		# Con destroy non funziona
-		loginWindow.mainloop()
-		return
 
-	elif len(username) > 16:
-		popup('Login failed', 'Username can\'t be longer than 16 characters')
-		loginWindow.quit()
+	if not checkUsername(username):
+		loginWindow.quit()		# Con destroy non funziona
 		loginWindow.mainloop()
 		return
 	
@@ -148,10 +157,10 @@ def listen():
 			popup('Disconnected', 'The server has shut down')
 			break
 
-		chat.config(state = NORMAL)
+		chat.config(state=NORMAL)
 		chat.insert(END, response + '\n')
 		chat.see('end')
-		chat.config(state = DISABLED)
+		chat.config(state=DISABLED)
 	# Chiudere, tornare al login? è possibile eseguire una funzione quando termina un thread?
 
 def main():

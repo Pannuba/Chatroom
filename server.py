@@ -7,7 +7,6 @@
 			* Fare funzione per distinguere tra comando e risposta
 			* Cronologia dei messaggi mandati, accessibile con la freccia su
 			* Colori custom in file config
-			* Controllare che l'username non siano solo spazi, togliere quelli all'inizio
 			* BUG: if trying to login twice as banned, it says can't connect to server
 '''
 
