@@ -6,6 +6,7 @@ from tkinter import *
 from configparser import *
 import signal, sys, time
 
+
 def quit(signum, frame):		# Eseguito quando viene premuto CTRL + C
 	print('Quitting...')
 	try:					# Solo qui il ; per concatenare metodi sullo stesso oggetto funziona...
@@ -13,6 +14,7 @@ def quit(signum, frame):		# Eseguito quando viene premuto CTRL + C
 	except:
 		pass		# Per quando non si è ancora connesso al server
 	sys.exit()
+
 
 def checkUsername(username):
 
@@ -32,6 +34,7 @@ def checkUsername(username):
 
 	return boolean
 
+
 def popup(title, message):		# Creare un popup di errore, o passare qua un parametro che faccia uscire?
 	popup = Tk()
 	popup.geometry('320x80')
@@ -45,6 +48,7 @@ def popup(title, message):		# Creare un popup di errore, o passare qua un parame
 	popupButton.pack(side=BOTTOM, pady=10)
 	popup.mainloop()
 
+
 def buildQuitWindow():
 	global quitWindow
 	quitWindow = Tk()
@@ -56,6 +60,7 @@ def buildQuitWindow():
 	yesButton.pack(side=LEFT)
 	noButton = Button(quitWindow, text='No', command=quitWindow.destroy)
 	noButton.pack(side=RIGHT)
+
 
 def buildLoginWindow():
 	global loginWindow
@@ -74,6 +79,7 @@ def buildLoginWindow():
 	pwField.pack()
 	button = Button(text='Login', command=lambda: login(userField, pwField, loginWindow))	# Faccio userField globale?
 	button.pack(side=BOTTOM)
+
 
 def buildChatWindow():
 	global chatWindow, textbox, chat, buffer, index
@@ -95,6 +101,7 @@ def buildChatWindow():
 	bar.pack(side=RIGHT, fill=Y)
 	chat.pack(expand=True, side=LEFT, fill=BOTH)
 
+
 def scrollBufferUp(self):
 	global index
 	index += 1
@@ -105,6 +112,7 @@ def scrollBufferUp(self):
 
 	textbox.delete(0, 'end')
 	textbox.insert(END, buffer[index])
+
 
 def scrollBufferDown(self):
 	global index
@@ -117,6 +125,7 @@ def scrollBufferDown(self):
 
 	textbox.delete(0, 'end')
 	textbox.insert(END, buffer[index])
+
 
 def login(userField, pwField, loginWindow):
 	global username, password, clientSocket		# Non so perché qua metto userField e in getMessage self, ma funziona
@@ -155,6 +164,7 @@ def login(userField, pwField, loginWindow):
 	
 	loginWindow.destroy()
 
+
 def getMessage(self):			# Finalmente funziona... Ma solo con "self". Nei tutorial non c'è
 	global index
 	message = textbox.get()
@@ -177,6 +187,7 @@ def getMessage(self):			# Finalmente funziona... Ma solo con "self". Nei tutoria
 		index = -1		# Controllare che il messaggio inviato non è già stato mandato
 		buffer.insert(0, message)
 	
+
 def listen():
 	
 	while True:
@@ -192,6 +203,7 @@ def listen():
 		chat.see('end')
 		chat.config(state=DISABLED)
 	# Chiudere, tornare al login? è possibile eseguire una funzione quando termina un thread?
+
 
 def main():
 	global serverPort, serverName
@@ -217,6 +229,7 @@ def main():
 	chatWindow.mainloop()		# Fino a che non si chiude la GUI lo script non procede
 	
 	quit(0, 0)		  # 0, 0 perché non so cosa fanno signum e frame
+
 
 if __name__ == '__main__':
 	main()

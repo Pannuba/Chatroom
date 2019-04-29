@@ -12,12 +12,12 @@
 from socket import *
 from threading import Thread
 from time import strftime
-from tkinter import *
 from configparser import *
 import signal, sys
 
 helpmessage =	'\nSERVER: Welcome to SuperChat 9000! Here\'s a list of available commands:\n\
 				\n!quit: you quit\n!help: shows this message\n\nHave fun, or something.'.encode('utf-8')
+
 
 def quit(signum, frame):		# Eseguito quando viene premuto CTRL + C
 	log('Quitting...')
@@ -25,13 +25,15 @@ def quit(signum, frame):		# Eseguito quando viene premuto CTRL + C
 	for i in socketList:
 		i.send('GOODBYE'.encode('utf-8'))
 		i.close()
-		
-	logfile.close()
+	
 	sys.exit()
+
 
 def log(logMessage):	# Mostra un messaggio nel terminale e lo aggiunge a chat.log
 	print(logMessage)
-	logfile.write(logMessage + '\n')
+	with open('chat.log', 'a') as logfile:
+		logfile.write(logMessage + '\n')
+
 
 def sendToAll(message):
 
@@ -41,6 +43,7 @@ def sendToAll(message):
 	except Exception as e:
 		print(e)	# Cercare di renderla loggabile per quando è un broken pipe
 		quit(0,0)
+
 
 def checkUser(user, socket, ip):
 	status = 'OK'
@@ -72,6 +75,7 @@ def checkUser(user, socket, ip):
 	socket.send(status.encode('utf-8'))
 	return status
 
+
 def handler(connectionSocket, user):
 
 		while True:
@@ -94,6 +98,7 @@ def handler(connectionSocket, user):
 		log(strftime('%Y-%m-%d %H:%M:%S') + ' ' + user + ' has left the server')		# Si termina il thread per un client connesso
 		sendToAll(user + ' has left the server')
 
+
 def main():
 	global socketList, usersList, logfile
 	socketList = []
@@ -101,7 +106,7 @@ def main():
 
 	signal.signal(signal.SIGINT, quit)
 
-	logfile = open('chat.log', 'a')
+	#logfile = open('chat.log', 'a')
 	log('\n' + strftime('%Y-%m-%d %H:%M:%S') + ' Server started')
 
 	config = ConfigParser()
@@ -115,7 +120,8 @@ def main():
 
 	serverSocket = socket(AF_INET, SOCK_STREAM)
 	serverSocket.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
-
+	serverSocket.settimeout(None)
+	
 	try:
 		serverSocket.bind(('', serverPort))
 	except:
@@ -140,6 +146,7 @@ def main():
 		thread = Thread(target=handler, args=(newSocket, user))
 		thread.daemon = True		# Sennò quit() si blocca
 		thread.start()
+
 
 if __name__ == '__main__':
 	main()
