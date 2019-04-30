@@ -25,7 +25,7 @@ def quit(signum, frame):		# Eseguito quando viene premuto CTRL + C
 	for i in socketList:
 		i.send('GOODBYE'.encode('utf-8'))
 		i.close()
-	
+		
 	sys.exit()
 
 
@@ -86,6 +86,9 @@ def handler(connectionSocket, user):
 			
 			if message == '!help':							# Funzione checkmessage?
 				connectionSocket.send(helpmessage)
+			
+			if message == '!users':
+				connectionSocket.send(('Currently logged in users: ' + ', '.join(usersList)).encode('utf-8'))
 			
 			else:
 				response = user + ': ' + message

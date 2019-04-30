@@ -62,147 +62,147 @@ def buildQuitWindow():
 	noButton.pack(side=RIGHT)
 
 
-def buildLoginWindow():
-	global loginWindow
-	loginWindow = Tk()													# Window
-	loginWindow.geometry('300x120')
-	loginWindow.resizable(False, False)
-	loginWindow.title('SuperChat 9000 - login')
-	loginWindow.protocol("WM_DELETE_WINDOW", sys.exit)
-	userLabel = Label(loginWindow, text='Username:')					# User label
-	userLabel.pack()
-	userField = Entry(loginWindow)										# User field
-	userField.pack(side=TOP)
-	pwLabel = Label(loginWindow, text='Password:')					# Password label
-	pwLabel.pack()
-	pwField = Entry(loginWindow, show='*')										# Password field
-	pwField.pack()
-	button = Button(text='Login', command=lambda: login(userField, pwField, loginWindow))	# Faccio userField globale?
-	button.pack(side=BOTTOM)
+class LoginWindow:
 
-
-def buildChatWindow():
-	global chatWindow, textbox, chat, buffer, index
-	index = -1
-	buffer = []
-	chatWindow = Tk()													# Window
-	chatWindow.geometry('640x480')
-	chatWindow.minsize(width=160, height=120)
-	chatWindow.title('SuperChat 9000 - logged in as ' + username)
-	textbox = Entry(chatWindow)											# Textbox
-	textbox.bind('<Return>', getMessage)
-	textbox.bind('<Up>', scrollBufferUp)
-	textbox.bind('<Down>', scrollBufferDown)
-	textbox.pack(side=BOTTOM, fill=X)
-	chat = Text(chatWindow, state=DISABLED)	# Non ho bisogno di width e height perché ho expand in pack
-	bar = Scrollbar(chatWindow, width=16, command=chat.yview)		# Scrollbar, chat window
-	chat.bind('<1>', lambda event: chat.focus_set())	# Permette di copiare il testo, nonostante sia DISABLED
-	chat.config(yscrollcommand=bar.set)
-	bar.pack(side=RIGHT, fill=Y)
-	chat.pack(expand=True, side=LEFT, fill=BOTH)
-
-
-def scrollBufferUp(self):
-	global index
-	index += 1
-
-	if index > (len(buffer) - 1):
-		index -= 1
-		return
-
-	textbox.delete(0, 'end')
-	textbox.insert(END, buffer[index])
-
-
-def scrollBufferDown(self):
-	global index
-	index -= 1
-
-	if index < 0:
-		index = -1
-		textbox.delete(0, 'end')
-		return
-
-	textbox.delete(0, 'end')
-	textbox.insert(END, buffer[index])
-
-
-def login(userField, pwField, loginWindow):
-	global username, password, clientSocket		# Non so perché qua metto userField e in getMessage self, ma funziona
-	username = userField.get()
-	password = pwField.get()	# Svolge tutto il login in questa funzione
-	userField.delete(0, 'end')
-
-	if not checkUsername(username):
-		loginWindow.quit()		# Con destroy non funziona
-		loginWindow.mainloop()
-		return
+	def __init__(self, master):
+		self.master = master		# master = "LoginWindow"
+		self.master.geometry('300x120')
+		self.master.resizable(False, False)
+		self.master.title('SuperChat 9000 - login')
+		self.master.protocol("WM_DELETE_WINDOW", sys.exit)
+		self.userLabel = Label(self.master, text='Username:')
+		self.userLabel.pack()
+		self.userField = Entry(self.master)
+		self.userField.bind('<Return>', self.login)
+		self.userField.pack(side=TOP)
+		self.pwLabel = Label(self.master, text='Password:')
+		self.pwLabel.pack()
+		self.pwField = Entry(self.master, show='*')
+		self.pwField.pack()
+		self.button = Button(text='Login', command=self.login)	# Faccio userField globale?
+		self.button.pack(side=BOTTOM)
 	
-	try:	# Il client invia un BrokenPipeError quando si connette dopo il popup di ban
-		clientSocket = socket(AF_INET, SOCK_STREAM)
-		clientSocket.connect((serverName, serverPort))	# Connessione al server
-		clientSocket.send(username.encode('utf-8'))		# Dentro o fuori dal try?
-	except Exception as e:
-		print(e)
-		popup('Cannot connect to server', e)	# Quit?
-	
-	status = clientSocket.recv(16).decode('utf-8')
+	def login(self):
+		global username, password, clientSocket		# Non so perché qua metto userField e in getMessage self, ma funziona
+		username = self.userField.get()
+		password = self.pwField.get()	# Svolge tutto il login in questa funzione
+		self.userField.delete(0, 'end')
 
-	if status == 'BANNED':							# Manca ADMIN, OK
-		popup('Banned', 'This user has been banned.')
-		clientSocket.shutdown(SHUT_RDWR)
-		clientSocket.close()
-		loginWindow.quit()
-		loginWindow.mainloop()
-		return
+		if not checkUsername(username):
+			self.master.quit()		# Con destroy non funziona
+			self.master.mainloop()
+			return
 		
-	elif status == 'DUPLICATE':
-		popup('Login failed', 'This user is already connected to the server')
-		loginWindow.quit()
-		loginWindow.mainloop()
-		return
-	
-	loginWindow.destroy()
-
-
-def getMessage(self):			# Finalmente funziona... Ma solo con "self". Nei tutorial non c'è
-	global index
-	message = textbox.get()
-	textbox.delete(0, 'end')	# Svuota la barra di input
-	
-	if message == '':		# Controlla che il messaggio non sia vuoto
-		print('Empty string, not sent')
-	
-	elif len(message) > 512:	# Dovrei controllare dopo encoding, ma forse non cambia
-		print('Message is too long (< 512 chars)')
-
-	elif message == '!quit':		# Potrei aggiungere risposte ad altri comandi
-		buildQuitWindow()
-		quitWindow.mainloop()
-		#print('ora passa a sigint')		# Perché lo stampa quando chiudo la chatWindow?
-		quit(0, 0)
-
-	else:
-		clientSocket.send(message.encode('utf-8'))
-		index = -1		# Controllare che il messaggio inviato non è già stato mandato
-		buffer.insert(0, message)
-	
-
-def listen():
-	
-	while True:
-
-		response = clientSocket.recv(512).decode('utf-8')	# Fare funzione per distinguere tra comando e risposta
+		try:	# Il client invia un BrokenPipeError quando si connette dopo il popup di ban
+			clientSocket = socket(AF_INET, SOCK_STREAM)
+			clientSocket.connect((serverName, serverPort))	# Connessione al server
+			clientSocket.send(username.encode('utf-8'))		# Dentro o fuori dal try?
+		except Exception as e:
+			print(e)
+			popup('Cannot connect to server', e)	# Quit?
 		
-		if response == 'GOODBYE':		# Fare una funzione per controllare la risposta?
-			popup('Disconnected', 'The server has shut down')
-			break
+		status = clientSocket.recv(16).decode('utf-8')
 
-		chat.config(state=NORMAL)
-		chat.insert(END, response + '\n')
-		chat.see('end')
-		chat.config(state=DISABLED)
-	# Chiudere, tornare al login? è possibile eseguire una funzione quando termina un thread?
+		if status == 'BANNED':							# Manca ADMIN, OK
+			popup('Banned', 'This user has been banned.')
+			clientSocket.shutdown(SHUT_RDWR)
+			clientSocket.close()
+			self.master.quit()
+			self.master.mainloop()
+			return
+			
+		elif status == 'DUPLICATE':
+			popup('Login failed', 'This user is already connected to the server')
+			self.master.quit()
+			self.master.mainloop()
+			return
+		
+		self.master.withdraw()	#così la root si interrompe e va avanti il main
+		self.newWindow = Toplevel(self.master)
+		self.app = ChatWindow(self.newWindow)	# Così la lascia sotto... Inoltre non comprendo
+
+
+class ChatWindow:
+
+	def __init__(self, master):
+		self.master = master
+		self.index = -1
+		self.buffer = []
+		self.master.protocol("WM_DELETE_WINDOW", self.master.quit)		# E non destroy
+		self.master.geometry('640x480')
+		self.master.minsize(width=160, height=120)
+		self.master.title('SuperChat 9000 - logged in as ' + username)
+		self.textbox = Entry(self.master)											# Textbox
+		self.textbox.bind('<Return>', self.getMessage)
+		self.textbox.bind('<Up>', self.scrollBufferUp)
+		self.textbox.bind('<Down>', self.scrollBufferDown)
+		self.textbox.pack(side=BOTTOM, fill=X)
+		self.chat = Text(self.master, state=DISABLED)	# Non ho bisogno di width e height perché ho expand in pack
+		self.bar = Scrollbar(self.master, width=16, command=self.chat.yview)		# Scrollbar, chat window
+		self.chat.bind('<1>', lambda event: self.chat.focus_set())	# Permette di copiare il testo, nonostante sia DISABLED
+		self.chat.config(yscrollcommand=self.bar.set)
+		self.bar.pack(side=RIGHT, fill=Y)
+		self.chat.pack(expand=True, side=LEFT, fill=BOTH)
+		listenThread = Thread(target=self.listen)			# arriva il messaggio di login la chat non è ancora stata creata e dà errore
+		listenThread.daemon = True		# Per far chiudere il programma con sys.exit(), altrimenti si blocca
+		listenThread.start()
+
+	def scrollBufferUp(self, ciao):		# Prima o poi dovrò sistemare questi ciao
+		self.index += 1
+
+		if self.index > (len(self.buffer) - 1):
+			self.index -= 1
+			return
+
+		self.textbox.delete(0, 'end')
+		self.textbox.insert(END, self.buffer[self.index])
+
+	def scrollBufferDown(self, ciao):
+		self.index -= 1
+
+		if self.index < 0:
+			self.index = -1
+			self.textbox.delete(0, 'end')
+			return
+
+		self.textbox.delete(0, 'end')
+		self.textbox.insert(END, self.buffer[self.index])
+
+	def getMessage(self, ciao):			# Finalmente funziona... Ma solo con "self". Nei tutorial non c'è
+		message = self.textbox.get()
+		self.textbox.delete(0, 'end')	# Svuota la barra di input
+		
+		if message == '':		# Controlla che il messaggio non sia vuoto
+			print('Empty string, not sent')
+		
+		elif len(message) > 512:	# Dovrei controllare dopo encoding, ma forse non cambia
+			print('Message is too long (< 512 chars)')
+
+		elif message == '!quit':		# Potrei aggiungere risposte ad altri comandi
+			buildQuitWindow()
+			quitWindow.mainloop()
+			#print('ora passa a sigint')		# Perché lo stampa quando chiudo la chatWindow?
+			quit(0, 0)
+
+		else:
+			clientSocket.send(message.encode('utf-8'))
+			self.index = -1		# Controllare che il messaggio inviato non è già stato mandato
+			self.buffer.insert(0, message)
+		
+	def listen(self):
+		while True:
+
+			response = clientSocket.recv(512).decode('utf-8')	# Fare funzione per distinguere tra comando e risposta
+			
+			if response == 'GOODBYE':		# Fare una funzione per controllare la risposta?
+				popup('Disconnected', 'The server has shut down')
+				break
+
+			self.chat.config(state=NORMAL)
+			self.chat.insert(END, response + '\n')
+			self.chat.see('end')
+			self.chat.config(state=DISABLED)
+		# Chiudere, tornare al login? è possibile eseguire una funzione quando termina un thread?
 
 
 def main():
@@ -220,13 +220,9 @@ def main():
 		print('client_config.ini is either missing, unreadable or badly set-up')
 		quit(0, 0)
 
-	buildLoginWindow()
-	loginWindow.mainloop()
-	buildChatWindow()								# Costruisco la finestra prima del thread perché altrimenti quando
-	listenThread = Thread(target=listen)			# arriva il messaggio di login la chat non è ancora stata creata e dà errore
-	listenThread.daemon = True		# Per far chiudere il programma con sys.exit(), altrimenti si blocca
-	listenThread.start()
-	chatWindow.mainloop()		# Fino a che non si chiude la GUI lo script non procede
+	root = Tk()
+	app = LoginWindow(root)
+	root.mainloop()
 	
 	quit(0, 0)		  # 0, 0 perché non so cosa fanno signum e frame
 
