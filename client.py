@@ -16,25 +16,6 @@ def quit(signum, frame):		# Eseguito quando viene premuto CTRL + C
 	sys.exit()
 
 
-def checkUsername(username):
-
-	boolean = False
-
-	if len(username) > 16:
-		popup('Login failed', 'Username can\'t be longer than 16 characters')
-
-		if username.strip() != username:
-			popup('Login failed', 'Username cannot start or end with spaces')
-
-	if username == '':
-		popup('Login failed', 'Username field cannot be empty')
-	
-	else:
-		boolean = True
-
-	return boolean
-
-
 def popup(title, message):		# Creare un popup di errore, o passare qua un parametro che faccia uscire?
 	popup = Tk()
 	popup.geometry('320x80')
@@ -81,14 +62,14 @@ class LoginWindow:
 		self.pwField.pack()
 		self.button = Button(text='Login', command=self.login)	# Faccio userField globale?
 		self.button.pack(side=BOTTOM)
-	
+		
 	def login(self):
 		global username, password, clientSocket		# Non so perché qua metto userField e in getMessage self, ma funziona
 		username = self.userField.get()
 		password = self.pwField.get()	# Svolge tutto il login in questa funzione
 		self.userField.delete(0, 'end')
 
-		if not checkUsername(username):
+		if not self.checkUsername(username):
 			self.master.quit()		# Con destroy non funziona
 			self.master.mainloop()
 			return
@@ -120,6 +101,23 @@ class LoginWindow:
 		self.master.withdraw()	#così la root si interrompe e va avanti il main
 		self.newWindow = Toplevel(self.master)
 		self.app = ChatWindow(self.newWindow)	# Così la lascia sotto... Inoltre non comprendo
+
+	def checkUsername(self, username):
+		boolean = False
+
+		if len(username) > 16:
+			popup('Login failed', 'Username can\'t be longer than 16 characters')
+
+			if username.strip() != username:
+				popup('Login failed', 'Username cannot start or end with spaces')
+
+		if username == '':
+			popup('Login failed', 'Username field cannot be empty')
+		
+		else:
+			boolean = True
+
+		return boolean
 
 
 class ChatWindow:
