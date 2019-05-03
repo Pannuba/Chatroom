@@ -12,3 +12,7 @@ class Popup:
 		self.popupMessage.pack(side=TOP, fill=BOTH)		# Forse fill non va
 		self.popupButton = Button(self.master, text='OK', command=self.master.destroy)
 		self.popupButton.pack(side=BOTTOM, pady=10)
+	
+def buildPopup(master, title, message):
+	newWindow = Toplevel(master)
+	app = Popup(newWindow, title, message)

@@ -79,8 +79,7 @@ class LoginWindow:
 			clientSocket.send(username.encode('utf-8'))		# Dentro o fuori dal try?
 		except Exception as e:
 			print(e)
-			self.newWindow = Toplevel(self.master)
-			self.app = Popup(self.newWindow, "Cannot connect to server", e)
+			buildPopup(self.master, "Cannot connect to server", e)
 		
 		status = clientSocket.recv(16).decode('utf-8')
 
