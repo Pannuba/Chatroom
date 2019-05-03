@@ -5,8 +5,7 @@ from threading import Thread
 from tkinter import *
 from configparser import *
 import signal, sys, time
-from popup import *
-from quitwindow import *
+from gui import *
 from config import *
 
 def quit(signum, frame):		# Eseguito quando viene premuto CTRL + C
@@ -173,17 +172,16 @@ def main():
 
 	signal.signal(signal.SIGINT, quit)
 
-	config = ConfigParser()
+	configFile = ConfigParser()
 
 	try:
-		config.read('client_config.ini')
-		serverName = config.get('Settings', 'ip')
-		serverPort = int(config.get('Settings', 'port'))
+		configFile.read('client_config.ini')
+		serverName = configFile.get('Settings', 'ip')
+		serverPort = int(configFile.get('Settings', 'port'))
 	except:
 		print('client_config.ini is either missing, unreadable or badly set-up')
 		quit(0, 0)
 
-	#root = Tk()
 	app = LoginWindow(root)
 	root.mainloop()
 	

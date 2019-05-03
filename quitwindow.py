@@ -1,5 +1,5 @@
-from tkinter import *
-import config
+from tkinter import Button, Toplevel
+from config import root
 
 class QuitWindow:
 	def __init__(self, master):
@@ -8,10 +8,10 @@ class QuitWindow:
 		self.master.resizable(False, False)
 		self.master.title('Are you sure you want to quit?')
 		self.master.focus()
-		self.yesButton = Button(self.master, text='Yes', command=config.root.destroy)	# root.destroy va ma deve essere globale. Usare quit con *args?
-		self.yesButton.pack(side=LEFT)
+		self.yesButton = Button(self.master, text='Yes', command=root.destroy)	# root.destroy va ma deve essere globale. Usare quit con *args?
+		self.yesButton.pack(side='left')
 		self.noButton = Button(self.master, text='No', command=self.master.destroy)
-		self.noButton.pack(side=RIGHT)
+		self.noButton.pack(side='right')
 
 def buildQuitWindow(master):
 	newWindow = Toplevel(master)

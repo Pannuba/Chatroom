@@ -1,4 +1,4 @@
-from tkinter import *
+from tkinter import Label, Button, Toplevel
 
 class Popup:
 	def __init__(self, master, title, message):
@@ -9,9 +9,9 @@ class Popup:
 		self.master.focus()
 		self.master.protocol("WM_DELETE_WINDOW", self.master.destroy)
 		self.popupMessage = Label(self.master, text=message, pady=10)#, width=20, height=20)
-		self.popupMessage.pack(side=TOP, fill=BOTH)		# Forse fill non va
+		self.popupMessage.pack(side='top', fill='both')		# Forse fill non va
 		self.popupButton = Button(self.master, text='OK', command=self.master.destroy)
-		self.popupButton.pack(side=BOTTOM, pady=10)
+		self.popupButton.pack(side='bottom', pady=10)
 	
 def buildPopup(master, title, message):
 	newWindow = Toplevel(master)
