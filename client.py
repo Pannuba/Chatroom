@@ -3,8 +3,7 @@
 from socket import *
 from threading import Thread
 from tkinter import *
-from configparser import *
-import signal, sys, time
+import signal, sys
 from gui import *
 from config import *
 
@@ -29,13 +28,13 @@ class LoginWindow:	# Non ho ben capito il ruolo di root e master, e le loro rela
 		self.userLabel.pack()
 		self.userField = Entry(self.master)
 		self.userField.bind('<Return>', self.login)
-		self.userField.pack(side=TOP)
+		self.userField.pack(side='top')
 		self.pwLabel = Label(self.master, text='Password:')
 		self.pwLabel.pack()
 		self.pwField = Entry(self.master, show='*')
 		self.pwField.pack()
 		self.button = Button(text='Login', command=self.login)	# Faccio userField globale?
-		self.button.pack(side=BOTTOM)
+		self.button.pack(side='bottom')
 		
 	def login(self):
 		global username, password, clientSocket		# Non so perché qua metto userField e in getMessage self, ma funziona
@@ -104,13 +103,13 @@ class ChatWindow:
 		self.textbox.bind('<Return>', self.getMessage)
 		self.textbox.bind('<Up>', self.scrollBufferUp)
 		self.textbox.bind('<Down>', self.scrollBufferDown)
-		self.textbox.pack(side=BOTTOM, fill=X)
-		self.chat = Text(self.master, state=DISABLED)	# Non ho bisogno di width e height perché ho expand in pack
+		self.textbox.pack(side='bottom', fill='x')
+		self.chat = Text(self.master, state='disabled')	# Non ho bisogno di width e height perché ho expand in pack
 		self.bar = Scrollbar(self.master, width=16, command=self.chat.yview)		# Scrollbar, chat window
 		self.chat.bind('<1>', lambda event: self.chat.focus_set())	# Permette di copiare il testo, nonostante sia DISABLED
 		self.chat.config(yscrollcommand=self.bar.set)
-		self.bar.pack(side=RIGHT, fill=Y)
-		self.chat.pack(expand=True, side=LEFT, fill=BOTH)
+		self.bar.pack(side='right', fill='y')
+		self.chat.pack(expand=True, side='left', fill='both')
 		listenThread = Thread(target=self.listen)			# arriva il messaggio di login la chat non è ancora stata creata e dà errore
 		listenThread.daemon = True		# Per far chiudere il programma con sys.exit(), altrimenti si blocca
 		listenThread.start()
@@ -123,7 +122,7 @@ class ChatWindow:
 			return
 
 		self.textbox.delete(0, 'end')
-		self.textbox.insert(END, self.buffer[self.index])
+		self.textbox.insert('end', self.buffer[self.index])
 
 	def scrollBufferDown(self, ciao):
 		self.index -= 1
@@ -162,25 +161,14 @@ class ChatWindow:
 				break
 
 			self.chat.config(state=NORMAL)
-			self.chat.insert(END, response + '\n')
+			self.chat.insert('end', response + '\n')
 			self.chat.see('end')
-			self.chat.config(state=DISABLED) # Chiudere, tornare al login? è possibile eseguire una funzione quando termina un thread?
+			self.chat.config(state='disabled') # Chiudere, tornare al login? è possibile eseguire una funzione quando termina un thread?
 
 
 def main():
-	global serverPort, serverName
 
 	signal.signal(signal.SIGINT, quit)
-
-	configFile = ConfigParser()
-
-	try:
-		configFile.read('client_config.ini')
-		serverName = configFile.get('Settings', 'ip')
-		serverPort = int(configFile.get('Settings', 'port'))
-	except:
-		print('client_config.ini is either missing, unreadable or badly set-up')
-		quit(0, 0)
 
 	app = LoginWindow(root)
 	root.mainloop()
