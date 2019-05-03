@@ -14,7 +14,7 @@ from configparser import *
 import signal, sys
 
 helpmessage =	'\nSERVER: Welcome to SuperChat 9000! Here\'s a list of available commands:\n\
-				\n!quit: you quit\n!help: shows this message\n\nHave fun, or something.'.encode('utf-8')
+				\n!quit: you quit\n!help: shows this message\n\nHave fun, or something.\n'.encode('utf-8')
 
 
 def quit(signum, frame):		# Eseguito quando viene premuto CTRL + C

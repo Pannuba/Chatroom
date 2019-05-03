@@ -1,12 +1,17 @@
 import sys
 from tkinter import Tk
 from configparser import ConfigParser
+from socket import *
 
-global root, serverPort, serverName
+global root, serverPort, serverName, username, clientSocket
 
 root = Tk()
 
+username = ''
+
 configFile = ConfigParser()
+
+clientSocket = socket(AF_INET, SOCK_STREAM)
 
 try:
 	configFile.read('client_config.ini')
