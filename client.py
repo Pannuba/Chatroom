@@ -16,19 +16,6 @@ def quit(signum, frame):		# Eseguito quando viene premuto CTRL + C
 		pass		# Per quando non si è ancora connesso al server
 	sys.exit()
 
-'''class Popup:
-	def __init__(self, master, title, message):
-		self.master = master
-		self.master.geometry('320x80')
-		self.master.resizable(False, False)
-		self.master.title(title)
-		self.master.focus()
-		self.master.protocol("WM_DELETE_WINDOW", self.master.destroy)
-		self.popupMessage = Label(self.master, text=message, pady=10)#, width=20, height=20)
-		self.popupMessage.pack(side=TOP, fill=BOTH)		# Forse fill non va
-		self.popupButton = Button(self.master, text='OK', command=self.master.destroy)
-		self.popupButton.pack(side=BOTTOM, pady=10)'''
-
 '''def buildQuitWindow():
 	global quitWindow
 	quitWindow = Tk()
@@ -42,7 +29,7 @@ def quit(signum, frame):		# Eseguito quando viene premuto CTRL + C
 	noButton.pack(side=RIGHT)
 '''
 
-class LoginWindow:
+class LoginWindow:	# Non ho ben capito il ruolo di root e master, e le loro relazioni
 
 	def __init__(self, master):
 		self.master = master		# master = "LoginWindow"
@@ -84,17 +71,13 @@ class LoginWindow:
 		status = clientSocket.recv(16).decode('utf-8')
 
 		if status == 'BANNED':							# Manca ADMIN, OK
-			popup('Banned', 'This user has been banned.')
+			buildPopup(self.master, 'Banned', 'This user has been banned.')
 			clientSocket.shutdown(SHUT_RDWR)
 			clientSocket.close()
-			self.master.quit()
-			self.master.mainloop()
 			return
 			
 		elif status == 'DUPLICATE':
-			popup('Login failed', 'This user is already connected to the server')
-			self.master.quit()
-			self.master.mainloop()
+			buildPopup(self.master, 'Login failed', 'This user is already connected to the server')
 			return
 			
 		self.master.withdraw()
@@ -105,18 +88,17 @@ class LoginWindow:
 		boolean = False
 
 		if username == '':
-			popup('Login failed', 'Username field cannot be empty')
+			buildPopup(self.master, 'Login failed', 'Username field cannot be empty')
 
 		elif len(username) > 16:
-			popup('Login failed', 'Username can\'t be longer than 16 characters')
+			buildPopup(self.master, 'Login failed', 'Username can\'t be longer than 16 characters')
 
 		elif username.strip() != username:
-			popup('Login failed', 'Username cannot start or end with spaces')
+			buildPopup(self.master, 'Login failed', 'Username cannot start or end with spaces')
 		
 		else:
 			boolean = True
 
-		print(boolean)
 		return boolean
 
 
