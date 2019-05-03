@@ -16,18 +16,23 @@ def quit(signum, frame):		# Eseguito quando viene premuto CTRL + C
 		pass		# Per quando non si è ancora connesso al server
 	sys.exit()
 
-'''def buildQuitWindow():
-	global quitWindow
-	quitWindow = Tk()
-	quitWindow.geometry('100x100')
-	quitWindow.resizable(False, False)
-	quitWindow.title('Are you sure you want to quit?')
-	quitWindow.focus()
-	yesButton = Button(quitWindow, text='Yes', command=quitWindow.destroy)	# Per ora entrambi sono destroy
-	yesButton.pack(side=LEFT)
-	noButton = Button(quitWindow, text='No', command=quitWindow.destroy)
-	noButton.pack(side=RIGHT)
-'''
+
+class QuitWindow:
+	def __init__(self, master):
+		self.master = master
+		self.master.geometry('400x100')
+		self.master.resizable(False, False)
+		self.master.title('Are you sure you want to quit?')
+		self.master.focus()
+		self.yesButton = Button(self.master, text='Yes', command=root.destroy)	# root.destroy va ma deve essere globale. Usare quit con *args?
+		self.yesButton.pack(side=LEFT)
+		self.noButton = Button(self.master, text='No', command=self.master.destroy)
+		self.noButton.pack(side=RIGHT)
+
+def buildQuitWindow(master):
+	newWindow = Toplevel(master)
+	app = QuitWindow(newWindow)
+
 
 class LoginWindow:	# Non ho ben capito il ruolo di root e master, e le loro relazioni
 
@@ -108,7 +113,8 @@ class ChatWindow:
 		self.master = master
 		self.index = -1
 		self.buffer = []
-		self.master.protocol("WM_DELETE_WINDOW", self.master.quit)		# E non destroy
+		#self.master.protocol("WM_DELETE_WINDOW", self.master.quit)		# E non destroy
+		self.master.protocol("WM_DELETE_WINDOW", self.master.quit)		# E non destroy (era self.master.quit)
 		self.master.geometry('640x480')
 		self.master.minsize(width=160, height=120)
 		self.master.title('SuperChat 9000 - logged in as ' + username)
@@ -152,22 +158,16 @@ class ChatWindow:
 		message = self.textbox.get()
 		self.textbox.delete(0, 'end')	# Svuota la barra di input
 		
-		if message == '':		# Controlla che il messaggio non sia vuoto
-			print('Empty string, not sent')
-		
-		elif len(message) > 512:	# Dovrei controllare dopo encoding, ma forse non cambia
+		if len(message) > 512:	# Dovrei controllare dopo encoding, ma forse non cambia
 			print('Message is too long (< 512 chars)')
 
-		else:
+		elif message == '!quit':		# Potrei aggiungere risposte ad altri comandi
+			buildQuitWindow(self.master)
+
+		elif message != '':
 			clientSocket.send(message.encode('utf-8'))
 			self.index = -1		# Controllare che il messaggio inviato non è già stato mandato
 			self.buffer.insert(0, message)
-			
-			'''elif message == '!quit':		# Potrei aggiungere risposte ad altri comandi
-			buildQuitWindow()
-			quitWindow.mainloop()
-			#print('ora passa a sigint')		# Perché lo stampa quando chiudo la chatWindow?
-			quit(0, 0)		(prima di else)'''
 		
 	def listen(self):
 		while True:
@@ -175,7 +175,7 @@ class ChatWindow:
 			response = clientSocket.recv(512).decode('utf-8')	# Fare funzione per distinguere tra comando e risposta
 			
 			if response == 'GOODBYE':		# Fare una funzione per controllare la risposta?
-				popup('Disconnected', 'The server has shut down')
+				buildPopup(self.master, 'Disconnected', 'The server has shut down')
 				break
 
 			self.chat.config(state=NORMAL)
@@ -186,7 +186,7 @@ class ChatWindow:
 
 
 def main():
-	global serverPort, serverName
+	global serverPort, serverName, root
 
 	signal.signal(signal.SIGINT, quit)
 
