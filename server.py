@@ -1,12 +1,10 @@
 #!/usr/bin/env python3
 
-'''TODO:	* Thread per inviare comandi dal server (o accettare connessioni, uno dei due)gi
+'''TODO:	* Thread per inviare comandi dal server (o accettare connessioni, uno dei due)
 			* Controllare i comandi inviati dai client (!ban, poi non saprei...)
 			* Sistema di login con utente e password
 			* Fare funzione per distinguere tra comando e risposta
-			* Cronologia dei messaggi mandati, accessibile con la freccia su
 			* Colori custom in file config
-			* BUG: if trying to login twice as banned, it says can't connect to server
 '''
 
 from socket import *
@@ -93,7 +91,7 @@ def handler(connectionSocket, user):
 			else:
 				response = user + ': ' + message
 				log(strftime('%Y-%m-%d %H:%M:%S') + ' Message from ' + response)
-				sendToAll(response)
+				sendToAll(strftime('%H:%M') + ' ' + response)
 		
 		connectionSocket.close()				# Se non rimuovo il client disconnesso dall'array, quando
 		socketList.remove(connectionSocket)		# distribuisco il messaggio a tutti si impalla

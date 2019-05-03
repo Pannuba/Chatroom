@@ -6,7 +6,8 @@ from tkinter import *
 from configparser import *
 import signal, sys, time
 from popup import *
-
+from quitwindow import *
+from config import *
 
 def quit(signum, frame):		# Eseguito quando viene premuto CTRL + C
 	print('Quitting...')
@@ -15,23 +16,6 @@ def quit(signum, frame):		# Eseguito quando viene premuto CTRL + C
 	except:
 		pass		# Per quando non si è ancora connesso al server
 	sys.exit()
-
-
-class QuitWindow:
-	def __init__(self, master):
-		self.master = master
-		self.master.geometry('400x100')
-		self.master.resizable(False, False)
-		self.master.title('Are you sure you want to quit?')
-		self.master.focus()
-		self.yesButton = Button(self.master, text='Yes', command=root.destroy)	# root.destroy va ma deve essere globale. Usare quit con *args?
-		self.yesButton.pack(side=LEFT)
-		self.noButton = Button(self.master, text='No', command=self.master.destroy)
-		self.noButton.pack(side=RIGHT)
-
-def buildQuitWindow(master):
-	newWindow = Toplevel(master)
-	app = QuitWindow(newWindow)
 
 
 class LoginWindow:	# Non ho ben capito il ruolo di root e master, e le loro relazioni
@@ -65,7 +49,7 @@ class LoginWindow:	# Non ho ben capito il ruolo di root e master, e le loro rela
 			self.master.mainloop()
 			return
 		
-		try:	# Il client invia un BrokenPipeError quando si connette dopo il popup di ban
+		try:
 			clientSocket = socket(AF_INET, SOCK_STREAM)
 			clientSocket.connect((serverName, serverPort))	# Connessione al server
 			clientSocket.send(username.encode('utf-8'))		# Dentro o fuori dal try?
@@ -113,12 +97,11 @@ class ChatWindow:
 		self.master = master
 		self.index = -1
 		self.buffer = []
-		#self.master.protocol("WM_DELETE_WINDOW", self.master.quit)		# E non destroy
 		self.master.protocol("WM_DELETE_WINDOW", self.master.quit)		# E non destroy (era self.master.quit)
 		self.master.geometry('640x480')
 		self.master.minsize(width=160, height=120)
 		self.master.title('SuperChat 9000 - logged in as ' + username)
-		self.textbox = Entry(self.master)											# Textbox
+		self.textbox = Entry(self.master)
 		self.textbox.bind('<Return>', self.getMessage)
 		self.textbox.bind('<Up>', self.scrollBufferUp)
 		self.textbox.bind('<Down>', self.scrollBufferDown)
@@ -176,17 +159,17 @@ class ChatWindow:
 			
 			if response == 'GOODBYE':		# Fare una funzione per controllare la risposta?
 				buildPopup(self.master, 'Disconnected', 'The server has shut down')
+				buildQuitWindow(self.master)
 				break
 
 			self.chat.config(state=NORMAL)
 			self.chat.insert(END, response + '\n')
 			self.chat.see('end')
-			self.chat.config(state=DISABLED)
-		# Chiudere, tornare al login? è possibile eseguire una funzione quando termina un thread?
+			self.chat.config(state=DISABLED) # Chiudere, tornare al login? è possibile eseguire una funzione quando termina un thread?
 
 
 def main():
-	global serverPort, serverName, root
+	global serverPort, serverName
 
 	signal.signal(signal.SIGINT, quit)
 
@@ -200,7 +183,7 @@ def main():
 		print('client_config.ini is either missing, unreadable or badly set-up')
 		quit(0, 0)
 
-	root = Tk()
+	#root = Tk()
 	app = LoginWindow(root)
 	root.mainloop()
 	
