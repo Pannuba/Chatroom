@@ -5,6 +5,7 @@ from threading import Thread
 from tkinter import *
 from configparser import *
 import signal, sys, time
+from popup import *
 
 
 def quit(signum, frame):		# Eseguito quando viene premuto CTRL + C
@@ -15,22 +16,20 @@ def quit(signum, frame):		# Eseguito quando viene premuto CTRL + C
 		pass		# Per quando non si è ancora connesso al server
 	sys.exit()
 
+'''class Popup:
+	def __init__(self, master, title, message):
+		self.master = master
+		self.master.geometry('320x80')
+		self.master.resizable(False, False)
+		self.master.title(title)
+		self.master.focus()
+		self.master.protocol("WM_DELETE_WINDOW", self.master.destroy)
+		self.popupMessage = Label(self.master, text=message, pady=10)#, width=20, height=20)
+		self.popupMessage.pack(side=TOP, fill=BOTH)		# Forse fill non va
+		self.popupButton = Button(self.master, text='OK', command=self.master.destroy)
+		self.popupButton.pack(side=BOTTOM, pady=10)'''
 
-def popup(title, message):		# Creare un popup di errore, o passare qua un parametro che faccia uscire?
-	popup = Tk()
-	popup.geometry('320x80')
-	popup.resizable(False, False)
-	popup.title(title)
-	popup.focus()
-	popup.protocol("WM_DELETE_WINDOW", popup.destroy)
-	popupMessage = Label(popup, text=message, pady=10)#, width=20, height=20)
-	popupMessage.pack(side=TOP, fill=BOTH)		# Forse fill non va
-	popupButton = Button(popup, text='OK', command=popup.destroy)
-	popupButton.pack(side=BOTTOM, pady=10)
-	popup.mainloop()
-
-
-def buildQuitWindow():
+'''def buildQuitWindow():
 	global quitWindow
 	quitWindow = Tk()
 	quitWindow.geometry('100x100')
@@ -41,7 +40,7 @@ def buildQuitWindow():
 	yesButton.pack(side=LEFT)
 	noButton = Button(quitWindow, text='No', command=quitWindow.destroy)
 	noButton.pack(side=RIGHT)
-
+'''
 
 class LoginWindow:
 
@@ -69,7 +68,7 @@ class LoginWindow:
 		password = self.pwField.get()	# Svolge tutto il login in questa funzione
 		self.userField.delete(0, 'end')
 
-		if not self.checkUsername(username):
+		if self.checkUsername(username) == False:
 			self.master.quit()		# Con destroy non funziona
 			self.master.mainloop()
 			return
@@ -80,7 +79,8 @@ class LoginWindow:
 			clientSocket.send(username.encode('utf-8'))		# Dentro o fuori dal try?
 		except Exception as e:
 			print(e)
-			popup('Cannot connect to server', e)	# Quit?
+			self.newWindow = Toplevel(self.master)
+			self.app = Popup(self.newWindow, "Cannot connect to server", e)
 		
 		status = clientSocket.recv(16).decode('utf-8')
 
@@ -97,26 +97,27 @@ class LoginWindow:
 			self.master.quit()
 			self.master.mainloop()
 			return
-		
-		self.master.withdraw()	#così la root si interrompe e va avanti il main
-		self.newWindow = Toplevel(self.master)
-		self.app = ChatWindow(self.newWindow)	# Così la lascia sotto... Inoltre non comprendo
+			
+		self.master.withdraw()
+		self.newWindow = Toplevel(self.master)	# Toplevel è simile a Tk()
+		self.app = ChatWindow(self.newWindow)
 
 	def checkUsername(self, username):
 		boolean = False
 
-		if len(username) > 16:
-			popup('Login failed', 'Username can\'t be longer than 16 characters')
-
-			if username.strip() != username:
-				popup('Login failed', 'Username cannot start or end with spaces')
-
 		if username == '':
 			popup('Login failed', 'Username field cannot be empty')
+
+		elif len(username) > 16:
+			popup('Login failed', 'Username can\'t be longer than 16 characters')
+
+		elif username.strip() != username:
+			popup('Login failed', 'Username cannot start or end with spaces')
 		
 		else:
 			boolean = True
 
+		print(boolean)
 		return boolean
 
 
@@ -176,16 +177,16 @@ class ChatWindow:
 		elif len(message) > 512:	# Dovrei controllare dopo encoding, ma forse non cambia
 			print('Message is too long (< 512 chars)')
 
-		elif message == '!quit':		# Potrei aggiungere risposte ad altri comandi
-			buildQuitWindow()
-			quitWindow.mainloop()
-			#print('ora passa a sigint')		# Perché lo stampa quando chiudo la chatWindow?
-			quit(0, 0)
-
 		else:
 			clientSocket.send(message.encode('utf-8'))
 			self.index = -1		# Controllare che il messaggio inviato non è già stato mandato
 			self.buffer.insert(0, message)
+			
+			'''elif message == '!quit':		# Potrei aggiungere risposte ad altri comandi
+			buildQuitWindow()
+			quitWindow.mainloop()
+			#print('ora passa a sigint')		# Perché lo stampa quando chiudo la chatWindow?
+			quit(0, 0)		(prima di else)'''
 		
 	def listen(self):
 		while True:
