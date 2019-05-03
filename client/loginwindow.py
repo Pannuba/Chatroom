@@ -1,5 +1,5 @@
 from config import serverName, serverPort, sys
-from chatwindow import *	# Comunque non importa socket perché è importato con una wildcard, credo
+from chatwindow import *
 
 class LoginWindow:	# Non ho ben capito il ruolo di root e master, e le loro relazioni
 
@@ -18,10 +18,10 @@ class LoginWindow:	# Non ho ben capito il ruolo di root e master, e le loro rela
 		self.pwLabel.pack()
 		self.pwField = Entry(self.master, show='*')
 		self.pwField.pack()
-		self.button = Button(text='Login', command=self.login)	# Faccio userField globale?
+		self.button = Button(text='Login', command=self.login)
 		self.button.pack(side='bottom')
 		
-	def login(self):
+	def login(self, *args):
 		global username, password	# Non so perché qua metto userField e in getMessage self, ma funziona
 		username = self.userField.get()
 		password = self.pwField.get()	# Svolge tutto il login in questa funzione

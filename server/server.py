@@ -11,7 +11,7 @@ from socket import *
 from threading import Thread
 from time import strftime
 from configparser import *
-import signal, sys
+import signal, sys, os
 
 helpmessage =	'\nSERVER: Welcome to SuperChat 9000! Here\'s a list of available commands:\n\
 				\n!quit: you quit\n!help: shows this message\n\nHave fun, or something.\n'.encode('utf-8')
@@ -29,7 +29,7 @@ def quit(signum, frame):		# Eseguito quando viene premuto CTRL + C
 
 def log(logMessage):	# Mostra un messaggio nel terminale e lo aggiunge a chat.log
 	print(logMessage)
-	with open('chat.log', 'a') as logfile:
+	with open(path + '/chat.log', 'a') as logfile:
 		logfile.write(logMessage + '\n')
 
 
@@ -47,8 +47,8 @@ def checkUser(user, socket, ip):
 	status = 'OK'
 
 	try:
-		admins = open('admins.txt', 'r')
-		banned = open('banned.txt', 'r')
+		admins = open(path + '/admins.txt', 'r')
+		banned = open(path + '/banned.txt', 'r')
 	except Exception as e:
 		log(e)
 		quit(0, 0)
@@ -101,19 +101,20 @@ def handler(connectionSocket, user):
 
 
 def main():
-	global socketList, usersList, logfile
+	global socketList, usersList, logfile, path
 	socketList = []
 	usersList = []
 
 	signal.signal(signal.SIGINT, quit)
 
-	#logfile = open('chat.log', 'a')
+	path = os.path.dirname(os.path.realpath(__file__))
+
 	log('\n' + strftime('%Y-%m-%d %H:%M:%S') + ' Server started')
 
 	config = ConfigParser()
 
 	try:
-		config.read('server_config.ini')
+		config.read(path + '/server_config.ini')
 		serverPort = int(config.get('Settings', 'port'))
 	except:
 		log('server_config.ini is either missing, unreadable or badly set-up')

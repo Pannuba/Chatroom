@@ -29,7 +29,7 @@ class ChatWindow:
 		listenThread.daemon = True		# Per far chiudere il programma con sys.exit(), altrimenti si blocca
 		listenThread.start()
 
-	def scrollBufferUp(self, ciao):		# Prima o poi dovrò sistemare questi ciao
+	def scrollBufferUp(self, *args):
 		self.index += 1
 
 		if self.index > (len(self.buffer) - 1):
@@ -39,7 +39,7 @@ class ChatWindow:
 		self.textbox.delete(0, 'end')
 		self.textbox.insert('end', self.buffer[self.index])
 
-	def scrollBufferDown(self, ciao):
+	def scrollBufferDown(self, *args):
 		self.index -= 1
 
 		if self.index < 0:
@@ -48,9 +48,9 @@ class ChatWindow:
 			return
 
 		self.textbox.delete(0, 'end')
-		self.textbox.insert(END, self.buffer[self.index])
+		self.textbox.insert('end', self.buffer[self.index])
 
-	def getMessage(self, ciao):			# Finalmente funziona... Ma solo con "self". Nei tutorial non c'è
+	def getMessage(self, *args):			# Finalmente funziona... Ma solo con "self". Nei tutorial non c'è
 		message = self.textbox.get()
 		self.textbox.delete(0, 'end')	# Svuota la barra di input
 		

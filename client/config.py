@@ -1,4 +1,4 @@
-import sys
+import sys, os
 from tkinter import Tk
 from configparser import ConfigParser
 from socket import *
@@ -6,15 +6,15 @@ from socket import *
 global root, serverPort, serverName, username, clientSocket
 
 root = Tk()
-
 username = ''
-
 configFile = ConfigParser()
-
 clientSocket = socket(AF_INET, SOCK_STREAM)
 
+# Se il programma è lanciato da un'altra cartella non trova il file di configurazione
+path = os.path.dirname(os.path.realpath(__file__))
+
 try:
-	configFile.read('client_config.ini')
+	configFile.read(path + '/client_config.ini')
 	serverName = configFile.get('Settings', 'ip')
 	serverPort = int(configFile.get('Settings', 'port'))
 except:
