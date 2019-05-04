@@ -3,10 +3,9 @@ from tkinter import Tk
 from configparser import ConfigParser
 from socket import *
 
-global root, serverPort, serverName, username, clientSocket
+global root, serverPort, serverName, clientSocket
 
 root = Tk()
-username = ''
 configFile = ConfigParser()
 clientSocket = socket(AF_INET, SOCK_STREAM)
 

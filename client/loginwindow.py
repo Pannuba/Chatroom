@@ -14,6 +14,7 @@ class LoginWindow:	# Non ho ben capito il ruolo di root e master, e le loro rela
 		self.userField = Entry(self.master)
 		self.userField.bind('<Return>', self.login)
 		self.userField.pack(side='top')
+		self.userField.focus()
 		self.pwLabel = Label(self.master, text='Password:')
 		self.pwLabel.pack()
 		self.pwField = Entry(self.master, show='*')

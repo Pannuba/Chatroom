@@ -1,8 +1,9 @@
 from tkinter import Text, Entry, Scrollbar
 from threading import Thread
-from config import username, clientSocket, socket
+from config import clientSocket, socket
 from quitwindow import *
 from popup import *
+import loginwindow as login
 
 class ChatWindow:
 
@@ -13,12 +14,13 @@ class ChatWindow:
 		self.master.protocol("WM_DELETE_WINDOW", self.master.quit)		# E non destroy (era self.master.quit)
 		self.master.geometry('640x480')
 		self.master.minsize(width=160, height=120)
-		self.master.title('SuperChat 9000 - logged in as ' + username)
+		self.master.title('SuperChat 9000 - logged in as ' + login.username)
 		self.textbox = Entry(self.master)
 		self.textbox.bind('<Return>', self.getMessage)
 		self.textbox.bind('<Up>', self.scrollBufferUp)
 		self.textbox.bind('<Down>', self.scrollBufferDown)
 		self.textbox.pack(side='bottom', fill='x')
+		self.textbox.focus()
 		self.chat = Text(self.master, state='disabled')	# Non ho bisogno di width e height perché ho expand in pack
 		self.bar = Scrollbar(self.master, width=16, command=self.chat.yview)		# Scrollbar, chat window
 		self.chat.bind('<1>', lambda event: self.chat.focus_set())	# Permette di copiare il testo, nonostante sia DISABLED
@@ -76,6 +78,7 @@ class ChatWindow:
 				break
 
 			self.chat.config(state='normal')
+			#self.chat.tag_config('time', foreground='grey')
 			self.chat.insert('end', response + '\n')
 			self.chat.see('end')
 			self.chat.config(state='disabled') # Chiudere, tornare al login? è possibile eseguire una funzione quando termina un thread?
