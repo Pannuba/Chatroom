@@ -74,7 +74,7 @@ def checkUser(user, socket, ip):
 	return status
 
 
-def handler(connectionSocket, user):
+def clientHandler(connectionSocket, user):		# Thread che legge i messaggi dei client
 
 		while True:
 			message = connectionSocket.recv(512).decode('utf-8')	# Attende la ricezione di un messaggio
@@ -100,6 +100,27 @@ def handler(connectionSocket, user):
 		sendToAll(user + ' has left the server')
 
 
+def acceptConnetions(serverSocket):			# Thread che accetta nuove connessioni
+	global socketList, usersList
+	
+	while True:
+		newSocket, (ip, port) = serverSocket.accept()		# l'esecuzione torna all'inizio del while e si mette in "pausa" a serversocket.accept()
+		user = newSocket.recv(16).decode('utf-8')			# Modificato clientAddress in ip, port per ottenere l'IP in una variabile
+
+		while (checkUser(user.lower(), newSocket, ip)) != 'OK':		# Trovare un modo più efficiente senza ripetere. While? Bool?
+			#newSocket.close() serve??
+			newSocket, (ip, port) = serverSocket.accept()		# Con questi il server non manda due cose di fila, così il client non ha problemi
+			user = newSocket.recv(16).decode('utf-8')				# con l'OK il client deve inviare un "ACK" ricevuto dal server in handler o qua
+
+		socketList.append(newSocket)
+		usersList.append(user.lower())
+		log(ip + ' has joined the server as ' + user)	# Dovevo usare format() perché clientAddress è una tuple e lo manda in palla
+		sendToAll(user + ' has joined the server')
+		clientThread = Thread(target=clientHandler, args=(newSocket, user))
+		clientThread.daemon = True		# Sennò quit() si blocca
+		clientThread.start()
+
+
 def main():
 	global socketList, usersList, logfile, path
 	socketList = []
@@ -120,7 +141,7 @@ def main():
 		log('server_config.ini is either missing, unreadable or badly set-up')
 		quit(0, 0)
 
-	serverSocket = socket(AF_INET, SOCK_STREAM)
+	serverSocket = socket(AF_INET, SOCK_STREAM)	# Lascio qua o metto in acceptConnections?
 	serverSocket.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
 	serverSocket.settimeout(None)
 	
@@ -132,23 +153,14 @@ def main():
 
 	serverSocket.listen(True)
 
-	while True:
-		newSocket, (ip, port) = serverSocket.accept()		# l'esecuzione torna all'inizio del while e si mette in "pausa" a serversocket.accept()
-		user = newSocket.recv(16).decode('utf-8')			# Modificato clientAddress in ip, port per ottenere l'IP in una variabile
+	acceptThread = Thread(target=acceptConnetions, args=(serverSocket,))
+	acceptThread.daemon = True
+	acceptThread.start()
 
-		while (checkUser(user.lower(), newSocket, ip)) != 'OK':		# Trovare un modo più efficiente senza ripetere. While? Bool?
-			#newSocket.close() serve??
-			newSocket, (ip, port) = serverSocket.accept()		# Con questi il server non manda due cose di fila, così il client non ha problemi
-			user = newSocket.recv(16).decode('utf-8')				# con l'OK il client deve inviare un "ACK" ricevuto dal server in handler o qua
-
-		socketList.append(newSocket)
-		usersList.append(user.lower())
-		log(ip + ' has joined the server as ' + user)	# Dovevo usare format() perché clientAddress è una tuple e lo manda in palla
-		sendToAll(user + ' has joined the server')
-		thread = Thread(target=handler, args=(newSocket, user))
-		thread.daemon = True		# Sennò quit() si blocca
-		thread.start()
-
+	while True:		# Invia comandi ai client, mandare solo a x?
+		command = input()
+		sendToAll(command)
+		
 
 if __name__ == '__main__':
 	main()
