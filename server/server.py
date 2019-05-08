@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 
 '''TODO:	* BUG: trying to login twice as banned throws errors
-			* Thread per inviare comandi dal server (o accettare connessioni, uno dei due)
-			* Controllare i comandi inviati dai client (!ban, poi non saprei...)
+			* BUG: string index out of range in client when server quits
+			* Creare comando per listare gli utenti loggati
 			* Sistema di login con utente e password
 			* Fare funzione per distinguere tra comando e risposta
 			* Colori custom in file config
-			* Inviare file, evidenziare link
+			* Inviare file, evidenziare link... magari...
 '''
 
 from socket import *
@@ -14,9 +14,72 @@ from threading import Thread
 from time import strftime
 from configparser import *
 import signal, sys, os
+from tkinter import *
 
 helpmessage =	'\nSERVER: Welcome to SuperChat 9000! Here\'s a list of available commands:\n\
 				\n!quit: you quit\n!help: shows this message\n\nHave fun, or something.\n'.encode('utf-8')
+
+
+class Window:
+
+	def __init__(self, master):
+		self.master = master
+		self.index = -1
+		self.buffer = []
+		self.master.protocol("WM_DELETE_WINDOW", self.master.quit)
+		self.master.geometry('640x480')
+		self.master.minsize(width=160, height=120)
+		self.master.title('Server lol')
+		self.textbox = Entry(self.master)
+		self.textbox.bind('<Return>', self.getMessage)
+		self.textbox.bind('<Up>', self.scrollBufferUp)
+		self.textbox.bind('<Down>', self.scrollBufferDown)
+		self.textbox.pack(side='bottom', fill='x')
+		self.textbox.focus()
+		self.chat = Text(self.master, state='disabled')
+		self.bar = Scrollbar(self.master, width=16, command=self.chat.yview)
+		self.chat.bind('<1>', lambda event: self.chat.focus_set())
+		self.chat.config(yscrollcommand=self.bar.set)
+		self.bar.pack(side='right', fill='y')
+		self.chat.pack(expand=True, side='left', fill='both')
+
+	def scrollBufferUp(self, *args):
+		self.index += 1
+
+		if self.index > (len(self.buffer) - 1):
+			self.index -= 1
+			return
+
+		self.textbox.delete(0, 'end')
+		self.textbox.insert('end', self.buffer[self.index])
+
+	def scrollBufferDown(self, *args):
+		self.index -= 1
+
+		if self.index < 0:
+			self.index = -1
+			self.textbox.delete(0, 'end')
+			return
+
+		self.textbox.delete(0, 'end')
+		self.textbox.insert('end', self.buffer[self.index])
+
+	def getMessage(self, *args):			# Finalmente funziona... Ma solo con "self". Nei tutorial non c'è
+		message = self.textbox.get()
+		message = '!' + message
+		self.textbox.delete(0, 'end')	# Svuota la barra di input
+		
+		if len(message) > 512:	# Dovrei controllare dopo encoding, ma forse non cambia
+			print('Message is too long (< 512 chars)')
+
+		elif message == '!shutdown':		# Potrei aggiungere risposte ad altri comandi
+			#buildQuitWindow(self.master)
+			self.master.quit()					# Devo aggiungere quitwindow
+
+		elif message != '':
+			sendToAll(message)
+			self.index = -1		# Controllare che il messaggio inviato non è già stato mandato
+			self.buffer.insert(0, message)
 
 
 def quit(signum, frame):		# Eseguito quando viene premuto CTRL + C
@@ -29,8 +92,15 @@ def quit(signum, frame):		# Eseguito quando viene premuto CTRL + C
 	sys.exit()
 
 
-def log(logMessage):	# Mostra un messaggio nel terminale e lo aggiunge a chat.log
+def log(logMessage):	# Mostra un messaggio nel terminale, nella finestra e lo aggiunge a chat.log
 	print(logMessage)
+	try:
+		app.chat.config(state='normal')
+		app.chat.insert('end', logMessage + '\n')
+		app.chat.see('end')
+		app.chat.config(state='disabled')
+	except:		# Per quando non è ancora stata creata la finestra in main
+		pass
 	with open(path + '/chat.log', 'a') as logfile:
 		logfile.write(logMessage + '\n')
 
@@ -76,30 +146,30 @@ def checkUser(user, socket, ip):
 	return status
 
 
-def clientHandler(connectionSocket, user):		# Thread che legge i messaggi dei client
+def clientHandler(connectionSocket, user):		# Thread che legge i messaggi dei client lasciare separato o integrare in classe gui??? funzione log come accede a gui?? devo mettere tutto
 
-		while True:
-			message = connectionSocket.recv(512).decode('utf-8')	# Attende la ricezione di un messaggio
+	while True:
+		message = connectionSocket.recv(512).decode('utf-8')	# Attende la ricezione di un messaggio
 
-			if message == '!quit':		# Controllare per altri comandi (fare funzione). Posso fare che se il primo 
-				break					# carattere è un ! controlla il comando, se non lo trova consiglia di fare !help
-			
-			if message == '!help':							# Funzione checkmessage?
-				connectionSocket.send(helpmessage)
-			
-			if message == '!users':
-				connectionSocket.send(('Currently logged in users: ' + ', '.join(usersList)).encode('utf-8'))
-			
-			else:
-				response = user + ': ' + message
-				log(strftime('%Y-%m-%d %H:%M:%S') + ' Message from ' + response)
-				sendToAll(strftime('%H:%M') + ' ' + response)
+		if message == '!quit':		# Controllare per altri comandi (fare funzione). Posso fare che se il primo 
+			break					# carattere è un ! controlla il comando, se non lo trova consiglia di fare !help
 		
-		connectionSocket.close()				# Se non rimuovo il client disconnesso dall'array, quando
-		socketList.remove(connectionSocket)		# distribuisco il messaggio a tutti si impalla
-		usersList.remove(user.lower())
-		log(strftime('%Y-%m-%d %H:%M:%S') + ' ' + user + ' has left the server')		# Si termina il thread per un client connesso
-		sendToAll(user + ' has left the server')
+		if message == '!help':							# Funzione checkmessage?
+			connectionSocket.send(helpmessage)
+		
+		if message == '!users':
+			connectionSocket.send(('Currently logged in users: ' + ', '.join(usersList)).encode('utf-8'))
+		
+		else:
+			response = user + ': ' + message
+			log(strftime('%Y-%m-%d %H:%M:%S') + ' Message from ' + response)
+			sendToAll(strftime('%H:%M') + ' ' + response)
+
+	connectionSocket.close()				# Se non rimuovo il client disconnesso dall'array, quando
+	socketList.remove(connectionSocket)		# distribuisco il messaggio a tutti si impalla						# AGGIUNGERE GUI A LOG
+	usersList.remove(user.lower())
+	log(strftime('%Y-%m-%d %H:%M:%S') + ' ' + user + ' has left the server')		# Si termina il thread per un client connesso
+	sendToAll(user + ' has left the server')
 
 
 def acceptConnetions(serverSocket):			# Thread che accetta nuove connessioni
@@ -124,7 +194,7 @@ def acceptConnetions(serverSocket):			# Thread che accetta nuove connessioni
 
 
 def main():
-	global socketList, usersList, logfile, path
+	global socketList, usersList, logfile, path, app
 	socketList = []
 	usersList = []
 
@@ -158,11 +228,12 @@ def main():
 	acceptThread = Thread(target=acceptConnetions, args=(serverSocket,))
 	acceptThread.daemon = True
 	acceptThread.start()
+	
+	root = Tk()
+	app = Window(root)
+	root.mainloop()
+	quit(0, 0)
 
-	while True:		# Invia comandi ai client, mandare solo a x?
-		command = '!' + input()
-		sendToAll(command)
-		
 
 if __name__ == '__main__':
 	main()
