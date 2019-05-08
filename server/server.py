@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 
-'''TODO:	* Thread per inviare comandi dal server (o accettare connessioni, uno dei due)
+'''TODO:	* BUG: trying to login twice as banned throws errors
+			* Thread per inviare comandi dal server (o accettare connessioni, uno dei due)
 			* Controllare i comandi inviati dai client (!ban, poi non saprei...)
 			* Sistema di login con utente e password
 			* Fare funzione per distinguere tra comando e risposta
 			* Colori custom in file config
+			* Inviare file, evidenziare link
 '''
 
 from socket import *
@@ -21,7 +23,7 @@ def quit(signum, frame):		# Eseguito quando viene premuto CTRL + C
 	log('Quitting...')
 
 	for i in socketList:
-		i.send('GOODBYE'.encode('utf-8'))
+		i.send('!disconnect'.encode('utf-8'))
 		i.close()
 		
 	sys.exit()
@@ -158,7 +160,7 @@ def main():
 	acceptThread.start()
 
 	while True:		# Invia comandi ai client, mandare solo a x?
-		command = input()
+		command = '!' + input()
 		sendToAll(command)
 		
 

@@ -66,19 +66,26 @@ class ChatWindow:
 			clientSocket.send(message.encode('utf-8'))
 			self.index = -1		# Controllare che il messaggio inviato non è già stato mandato
 			self.buffer.insert(0, message)
-		
+	
+	def checkCommand(self, command):
+		if command == '!disconnect':		# Fare una funzione per controllare la risposta?
+				buildPopup(self.master, 'Disconnected', 'The server has shut down')
+				buildQuitWindow(self.master)
+
+		elif command == '!test':
+			buildPopup(self.master, 'test', 'test!')
+	
 	def listen(self):
 		while True:
 
-			response = clientSocket.recv(512).decode('utf-8')	# Fare funzione per distinguere tra comando e risposta
-			
-			if response == 'GOODBYE':		# Fare una funzione per controllare la risposta?
-				buildPopup(self.master, 'Disconnected', 'The server has shut down')
-				buildQuitWindow(self.master)
-				break
+			response = clientSocket.recv(512).decode('utf-8')
 
-			self.chat.config(state='normal')
-			#self.chat.tag_config('time', foreground='grey')
-			self.chat.insert('end', response + '\n')
-			self.chat.see('end')
-			self.chat.config(state='disabled') # Chiudere, tornare al login? è possibile eseguire una funzione quando termina un thread?
+			if response[0] == '!':			# Se è un comando
+				self.checkCommand(response)
+
+			else:		# Altrimenti, mostra il messaggio nella finestra
+				self.chat.config(state='normal')
+				#self.chat.tag_config('time', foreground='grey')
+				self.chat.insert('end', response + '\n')
+				self.chat.see('end')
+				self.chat.config(state='disabled') # Chiudere, tornare al login? è possibile eseguire una funzione quando termina un thread?
